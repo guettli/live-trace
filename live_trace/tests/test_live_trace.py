@@ -38,3 +38,12 @@ class Test(unittest.TestCase):
         monitor_thread.stop()
         content=open(outfile).read()
         self.assertTrue(content)
+
+        parser=live_trace.get_argument_parser()
+        args=parser.parse_args(['analyze', '--log-file', outfile])
+        args.func(args)
+
+    def test_non_existing_logfile(self):        
+        parser=live_trace.get_argument_parser()
+        args=parser.parse_args(['analyze', '--log-file', 'file-which-does-not-exist'])
+        self.assertRaises(IOError, args.func, args)

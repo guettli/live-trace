@@ -2,6 +2,7 @@
 # Initial Code from djangotools/utils/debug_live.py
 
 import os, re, sys, time, datetime, thread, threading, atexit, traceback
+import argparse
 
 import logging
 if __name__=='__main__':
@@ -9,8 +10,6 @@ if __name__=='__main__':
 else:
     logger=logging.getLogger(__name__)
 del(logging)
-
-from main import start
 
 u'''
 
@@ -158,13 +157,42 @@ class Tracer(object):
         fd_out.write('\n'.join(code))
         self.close_outfile(fd_out)
 
-def main():
-    import argparse
+def analyze(args):
+    from . import parser
+    parser.read_logs(args)
+
+def test(args):
+    assert ''
+
+def get_argument_parser():
     parser=argparse.ArgumentParser(description=
 '''Read stacktraces log which where created by live_trace. Logs are searched in %s. By default a new file is created for every day. If unsure, use sum-last-frame without other arguments to see the summary of today's output.\n\nlive_trace: A "daemon" thread monitors the process and writes out stracktraces of every N (float) seconds. This command line tool helps to see where the interpreter spent the most time.\n\nEvery stacktrace has several frames (call stack). In most cases you want to see "sum-last-frame" ("last" means "deepest" frames: that's where the interpreter was interrupted by the monitor thread). A simple regex tries to mark our code (vs python/django code) with <====.''' % (outfile_dir))
-    parser.add_argument('action', choices=['sum-all-frames', 'sum-last-frame', 'test'])
-    parser.add_argument('--most-common', '-m', metavar='N', default=30, type=int, help='Display the N most common lines in the stacktraces')
-    parser.add_argument('--log-file', '-l', metavar='LOGFILE', help='Logfile defaults to ~/tmp/live-trace/YYYY-MM-DD.log', dest='logfile', default=outfile)
+
+    subparsers = parser.add_subparsers(title='subcommands',
+                                       description='valid subcommands')
+    parser_analyze=subparsers.add_parser('analyze')
+    parser_analyze.add_argument('--sum-all-frames', action='store_true')
+    parser_analyze.add_argument('--most-common', '-m', metavar='N', default=30, type=int, help='Display the N most common lines in the stacktraces')
+    parser_analyze.add_argument('--log-file', '-l', metavar='LOGFILE', help='Logfile defaults to ~/tmp/live-trace/YYYY-MM-DD.log', dest='logfile', default=outfile)
+    parser_analyze.set_defaults(func=analyze)
+
+    parser_test=subparsers.add_parser('test')
+    parser_test.set_defaults(func=test)
+
+    return parser
+
+def main():
+    parser=get_argument_parser()
     args=parser.parse_args()
-    read_logs(args)
+    args.func(args)
+
+def start(interval, outfile_template=None):
+    tracer = Tracer(interval=interval, outfile_template=outfile_template)
+    # tracer.thread.setDaemon(True) # http://bugs.python.org/issue1856
+    # we use parent_thread.join(interval) now.
+    # http://stackoverflow.com/questions/16731115/how-to-debug-a-python-seg-fault
+    # http://stackoverflow.com/questions/18098475/detect-interpreter-shut-down-in-daemon-thread
+
+    tracer.start()
+    return tracer
 

@@ -1,3 +1,5 @@
+import re
+
 other_code=re.compile(r'/(django|python...)/')
 
 def read_logs(args):
@@ -6,18 +8,12 @@ def read_logs(args):
     cur_stack=[]
     py_line=''
     code_line=''
-    if args.action=='test':
-        return do_test(args)
-    if args.action=='sum-all-frames':
-        sum_all_frames=True
-    else: # sum-last-frame
-        sum_all_frames=False
-    print 'logfile', args.logfile
+    print 'logfile', args
     count_stacks=0
     for line in open(args.logfile):
         if line.startswith('#END'):
             count_stacks+=1
-            if sum_all_frames:
+            if args.sum_all_frames:
                 frames=cur_stack
             else:
                 frames=cur_stack[-1:]
