@@ -110,10 +110,10 @@ class Tracer(object):
             now=datetime.datetime.now()
         return self.outfile_template.format(now)
     
-    def open_outfile(self):
+    def open_outfile(self, now=None):
         if self.outfile_template=='-':
             return sys.stdout
-        outfile=self.get_outfile()
+        outfile=self.get_outfile(now)
         outfile_base=os.path.dirname(outfile)
         if not os.path.exists(outfile_base):
             os.makedirs(outfile_base)

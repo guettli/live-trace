@@ -1,3 +1,4 @@
+import os
 import time
 import datetime
 import tempfile
@@ -18,6 +19,11 @@ class Test(unittest.TestCase):
         now=datetime.datetime(2014, 3, 26, 12, 14)
         tracer.outfile_template='{:%Y/%m/%d}/foo.log'
         self.assertEqual('2014/03/26/foo.log', tracer.get_outfile(now=now))
+
+        out_dir=tempfile.mktemp(prefix='live_trace_get_outfile')
+        tracer.outfile_template=os.path.join(out_dir, '{:%Y/%m/%d}/foo.log')
+        tracer.open_outfile(now=now)
+        self.assertTrue(os.path.exists(os.path.join(out_dir, '2014/03/26')))
         tracer.stop()
 
     def test_output(self):
