@@ -12,11 +12,11 @@ del(logging)
 
 u'''
 
-debug_live.start(seconds_float) starts a monitor thread which print the stacktrace of all threads into
+live_trace.start(seconds_float) starts a monitor thread which print the stacktrace of all threads into
 a logfile. You can report which lines are executed the most with this script:
 
-app_foo_d@server:~$ python djangotools/utils/debug_live.py -h
-usage: debug_live.py [-h] [--most-common N] {sum-all-frames,sum-last-frame}
+app_foo_d@server:~$ live-trace -h
+usage: live-trace [-h] [--most-common N] {sum-all-frames,sum-last-frame}
 
 Read stacktrace log
 
@@ -34,14 +34,13 @@ You can start the watching thread your django middleware like this:
 class FOOMiddleware:
     def __init__(self):
         u'This code gets executed once after the start of the wsgi worker process. Not for every request!'
-        seconds=getattr(settings, 'debug_live_interval', None)
+        seconds=getattr(settings, 'live_trace_interval', None)
         if seconds:
-            seconds=float(seconds)
-            from djangotools.utils import debug_live
-            debug_live.start(seconds)
+            import live_trace
+            live_trace.start(seconds)
 
 # settings.py
-debug_live_interval=0.3 # ever 0.3 second
+live_trace_interval=0.3 # ever 0.3 second
 
 # Inspired by http://code.google.com/p/modwsgi/wiki/DebuggingTechniques
 
@@ -49,7 +48,7 @@ You can get a simple report of the log file of stacktraces like below. The lines
 which are not from django are marked with "<====". That's most likely your code
 and this could be a bottle neck.
 
-python ..../debug_live.py read
+python ..../live_trace.py read
  1971 File: "/home/foo_bar_p/django/core/handlers/wsgi.py", line 272, in __call__
     response = self.get_response(request)
  1812 File: "/home/foo_bar_p/django/core/handlers/base.py", line 111, in get_response
@@ -78,7 +77,7 @@ python ..../debug_live.py read
 from django.conf import settings
 
 outfile_date=datetime.date.today()
-outfile_dir=os.path.expanduser('~/tmp/debug_live')
+outfile_dir=os.path.expanduser('~/tmp/live_trace')
 
 def set_outfile():
     global outfile
@@ -211,10 +210,10 @@ def read_logs(args):
 def main():
     import argparse
     parser=argparse.ArgumentParser(description=
-'''Read stacktraces log which where created by debug_live. Logs are searched in %s. By default a new file is created for every day. If unsure, use sum-last-frame without other arguments to see the summary of today's output.\n\ndebug_live: A "daemon" thread monitors the process and writes out stracktraces of every N (float) seconds. This command line tool helps to see where the interpreter spent the most time.\n\nEvery stacktrace has several frames (call stack). In most cases you want to see "sum-last-frame" ("last" means "deepest" frames: that's where the interpreter was interrupted by the monitor thread). A simple regex tries to mark our code (vs python/django code) with <====.''' % (outfile_dir))
+'''Read stacktraces log which where created by live_trace. Logs are searched in %s. By default a new file is created for every day. If unsure, use sum-last-frame without other arguments to see the summary of today's output.\n\nlive_trace: A "daemon" thread monitors the process and writes out stracktraces of every N (float) seconds. This command line tool helps to see where the interpreter spent the most time.\n\nEvery stacktrace has several frames (call stack). In most cases you want to see "sum-last-frame" ("last" means "deepest" frames: that's where the interpreter was interrupted by the monitor thread). A simple regex tries to mark our code (vs python/django code) with <====.''' % (outfile_dir))
     parser.add_argument('action', choices=['sum-all-frames', 'sum-last-frame', 'test'])
     parser.add_argument('--most-common', '-m', metavar='N', default=30, type=int, help='Display the N most common lines in the stacktraces')
-    parser.add_argument('--log-file', '-l', metavar='LOGFILE', help='Logfile defaults to ~/tmp/debug-live/YYYY-MM-DD.log', dest='logfile', default=outfile)
+    parser.add_argument('--log-file', '-l', metavar='LOGFILE', help='Logfile defaults to ~/tmp/live-trace/YYYY-MM-DD.log', dest='logfile', default=outfile)
     args=parser.parse_args()
     read_logs(args)
 
