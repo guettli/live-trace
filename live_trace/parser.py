@@ -6,7 +6,7 @@ other_code=re.compile(r'/(django|python...)/')
 class ParseError(Exception):
     pass
 
-Frame=collections.namedtuple('Frame', ('filename', 'source_line'))
+Frame=collections.namedtuple('Frame', ('filename', 'source_code'))
 
 '''
 
@@ -16,23 +16,26 @@ Frame=collections.namedtuple('Frame', ('filename', 'source_line'))
 
 '''
 
+class FrameCounter(object):
+    count_stacks=0
+    def __init__(self):
+        self.frames=dict()
 
 def read_logs(args):
     # The outfile can be huge, don't read the whole file into memory.
-    counter=dict() # We need to support Python2.6. Not available: collections.Counter()
+    counter=FrameCounter()
     cur_stack=[]
     py_line=''
     code_line=''
-    count_stacks=0
     for line in open(args.logfile):
         if line.startswith('#END'):
-            count_stacks+=1
+            counter.count_stacks+=1
             if args.sum_all_frames:
                 frames=cur_stack
             else:
                 frames=cur_stack[-1:]
             for frame in frames:
-                counter[frame]=counter.get(frame, 0)+1
+                counter.frames[frame]=counter.frames.get(frame, 0)+1
             cur_stack=[]
             continue
         if line[0] in '\n#':
@@ -50,9 +53,15 @@ def read_logs(args):
     return counter
 
 def print_counts(args, counter):
-    for i, (count, (py, code)) in enumerate(sorted([(count, frame) for (frame, count) in counter.items()], reverse=True)):
+    for line in print_counts_to_lines(args, counter):
+        print line
+
+our_code_marker='<===='
+def print_counts_to_lines(args, counter):
+    for i, (count, frame) in enumerate(sorted([(count, frame) for (frame, count) in counter.frames.items()], reverse=True)):
         if i>args.most_common:
             break
-        if not other_code.search(py):
-            py='%s      <====' % py
-        print '% 5d %.2f%% %s\n    %s' % (count, count*100.0/count_stacks, py, code)
+        filename=frame.filename
+        if not other_code.search(filename):
+            filename='%s      %s' % (filename, our_code_marker)
+        yield '% 5d %.2f%% %s\n    %s' % (count, count*100.0/counter.count_stacks, filename, frame.source_code)

@@ -44,13 +44,31 @@ class Test(unittest.TestCase):
         args=parser.parse_args(['analyze', '--log-file', outfile])
         counter=live_trace.parser.read_logs(args)
         found=False
-        for frame, count in counter.items():
-            if 'time.sleep(time_to_sleep) # This line should appear' in frame.source_line:
+        for frame, count in counter.frames.items():
+            if 'time.sleep(time_to_sleep) # This line should appear' in frame.source_code:
                 found=True
                 break
         self.assertGreater(count, 80)
         self.assertGreater(120, count)
         self.assertIn('test_live_trace.py', frame.filename)
+
+    def test_print_logs(self):
+        parser=live_trace.get_argument_parser()
+        args=parser.parse_args(['analyze'])
+        from live_trace.parser import Frame, FrameCounter
+        counter=FrameCounter()
+        counter.count_stacks=94
+        counter.frames={Frame(filename='File: "/usr/lib64/python2.7/threading.py", line 243, in wait', source_code='  waiter.acquire()'): 1, Frame(filename='File: "/home/foog/src/live-trace/live_trace/tests/test_live_trace.py", line 38, in test_read_logs', source_code='  time.sleep(time_to_sleep) # This line should appear'): 92}
+        
+        lines=list(live_trace.parser.print_counts_to_lines(args, counter))
+        self.assertEqual(2, len(lines))
+        sleep_line=lines[0]
+        self.assertIn('tests/test_live_trace.py', sleep_line)
+        self.assertIn(live_trace.parser.our_code_marker, sleep_line)
+
+        threading_line=lines[1]
+        self.assertIn('threading.py', threading_line)
+        self.assertIn('waiter.acquire()', threading_line)
 
     def test_non_existing_logfile(self):        
         parser=live_trace.get_argument_parser()
