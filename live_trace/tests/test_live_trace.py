@@ -26,22 +26,31 @@ class Test(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(out_dir, '2014/03/26')))
         tracer.stop()
 
-    def test_output(self):
+    def test_read_logs(self):
         outfile=tempfile.mktemp(prefix='live_trace_test_output', suffix='.log')
         logger.info('outfile: %s' % outfile)
         monitor_thread=live_trace.start(self.interval, outfile_template=outfile)
 
         self.assertRaises(live_trace.TracerAlreadyRunning, live_trace.start, (self.interval,), **dict(outfile_template=outfile))
 
+        time_to_sleep=0.01
         for i in xrange(100):
-            time.sleep(.01)
+            time.sleep(time_to_sleep) # This line should appear
         monitor_thread.stop()
         content=open(outfile).read()
         self.assertTrue(content)
 
         parser=live_trace.get_argument_parser()
         args=parser.parse_args(['analyze', '--log-file', outfile])
-        args.func(args)
+        counter=live_trace.parser.read_logs(args)
+        found=False
+        for frame, count in counter.items():
+            if 'time.sleep(time_to_sleep) # This line should appear' in frame.source_line:
+                found=True
+                break
+        self.assertGreater(count, 80)
+        self.assertGreater(120, count)
+        self.assertIn('test_live_trace.py', frame.filename)
 
     def test_non_existing_logfile(self):        
         parser=live_trace.get_argument_parser()

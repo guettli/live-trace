@@ -1,6 +1,21 @@
 import re
+import collections
 
 other_code=re.compile(r'/(django|python...)/')
+
+class ParseError(Exception):
+    pass
+
+Frame=collections.namedtuple('Frame', ('filename', 'source_line'))
+
+'''
+
+'File: "/usr/lib64/python2.7/threading.py", line 243, in wait'
+
+'  waiter.acquire()'
+
+'''
+
 
 def read_logs(args):
     # The outfile can be huge, don't read the whole file into memory.
@@ -8,7 +23,6 @@ def read_logs(args):
     cur_stack=[]
     py_line=''
     code_line=''
-    print 'logfile', args
     count_stacks=0
     for line in open(args.logfile):
         if line.startswith('#END'):
@@ -30,9 +44,12 @@ def read_logs(args):
             code_line=line.rstrip()
             if not (py_line, code_line) in cur_stack:
                 # If there is a recursion, count the line only once per stacktrace
-                cur_stack.append((py_line, code_line))
+                cur_stack.append(Frame(py_line, code_line))
             continue
-        print 'ERROR unparsed', line
+        raise ParseError('unparsed: %s' % line)
+    return counter
+
+def print_counts(args, counter):
     for i, (count, (py, code)) in enumerate(sorted([(count, frame) for (frame, count) in counter.items()], reverse=True)):
         if i>args.most_common:
             break
