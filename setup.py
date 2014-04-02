@@ -30,7 +30,7 @@ setuptools.setup(
 
     entry_points={
         'console_scripts': [
-            'live-trace=live_trace.main:main',
+            'live-trace=live_trace:main',
             ],
         }
     )

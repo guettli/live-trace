@@ -162,7 +162,9 @@ def analyze(args):
     parser.read_logs(args)
 
 def test(args):
-    assert ''
+    import pytest
+    errno = pytest.main(['--pyargs', 'live_trace'])
+    sys.exit(errno)
 
 def get_argument_parser():
     parser=argparse.ArgumentParser(description=
