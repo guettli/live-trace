@@ -48,7 +48,7 @@ class Test(unittest.TestCase):
             if 'time.sleep(time_to_sleep) # This line should appear' in frame.source_code:
                 found=True
                 break
-        self.assertGreater(count, 80)
+        self.assertGreater(count, 60)
         self.assertGreater(120, count)
         self.assertIn('test_live_trace.py', frame.filename)
 
