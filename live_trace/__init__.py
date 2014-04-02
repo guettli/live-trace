@@ -78,13 +78,8 @@ class TracerAlreadyRunning(Exception):
     pass
 
 
-outfile_date=datetime.date.today()
 outfile_dir=os.path.expanduser('~/tmp/live_trace')
-
-def set_outfile():
-    global outfile
-    outfile = os.path.join(outfile_dir, '%s.log' % outfile_date.strftime('%Y-%m-%d'))
-set_outfile()
+outfile=os.path.join(outfile_dir, '{:%Y-%m-%d-%H-%M-%S}.log')
 
 monitor_thread=None
 
@@ -166,6 +161,32 @@ def test(args):
     errno = pytest.main(['--pyargs', 'live_trace'])
     sys.exit(errno)
 
+def run(args):
+    command_args=list(args.command_args)
+    cmd=command_args.pop(0)
+    if os.path.exists(cmd):
+        found=cmd
+    else:
+        found=None
+        for path in os.environ.get('PATH', '').split(os.pathsep):
+            cmd_try=os.path.join(path, cmd)
+            if os.path.exists(cmd_try):
+                found=cmd_try
+                break
+        if not found:
+            raise ValueError('Command not found: %s' % cmd)
+    start(outfile_template=args.outfile)
+    sys.argv=args.command_args
+    __name__='__main__'
+    execfile(found)
+
+def version(args):
+    import pkg_resources
+    print pkg_resources.get_distribution('live-trace').version
+
+def sleep(args):
+    time.sleep(args.secs_to_sleep)
+
 def get_argument_parser():
     parser=argparse.ArgumentParser(description=
 '''Read stacktraces log which where created by live_trace. Logs are searched in %s. By default a new file is created for every day. If unsure, use sum-last-frame without other arguments to see the summary of today's output.\n\nlive_trace: A "daemon" thread monitors the process and writes out stracktraces of every N (float) seconds. This command line tool helps to see where the interpreter spent the most time.\n\nEvery stacktrace has several frames (call stack). In most cases you want to see "sum-last-frame" ("last" means "deepest" frames: that's where the interpreter was interrupted by the monitor thread). A simple regex tries to mark our code (vs python/django code) with <====.''' % (outfile_dir))
@@ -175,12 +196,23 @@ def get_argument_parser():
     parser_analyze=subparsers.add_parser('analyze')
     parser_analyze.add_argument('--sum-all-frames', action='store_true')
     parser_analyze.add_argument('--most-common', '-m', metavar='N', default=30, type=int, help='Display the N most common lines in the stacktraces')
-    parser_analyze.add_argument('--log-file', '-l', metavar='LOGFILE', help='Logfile defaults to ~/tmp/live-trace/YYYY-MM-DD.log', dest='logfile', default=outfile)
+    parser_analyze.add_argument('--log-file', '-l', metavar='LOGFILE', help='defaults to %s' % outfile.replace('%', '%%'), dest='logfile', default=outfile)
     parser_analyze.set_defaults(func=analyze)
 
     parser_test=subparsers.add_parser('test')
     parser_test.set_defaults(func=test)
 
+    parser_run=subparsers.add_parser('run')
+    parser_run.set_defaults(func=run)
+    parser_run.add_argument('--out-file',  metavar='LOGFILE', help='defaults to %s' % outfile.replace('%', '%%'), dest='outfile', default=outfile)
+    parser_run.add_argument('command_args', nargs='*')
+
+    parser_version=subparsers.add_parser('version')
+    parser_version.set_defaults(func=version)
+
+    parser_sleep=subparsers.add_parser('sleep')
+    parser_sleep.set_defaults(func=sleep)
+    parser_sleep.add_argument('secs_to_sleep', type=float, default=3.0)
     return parser
 
 def main():
@@ -188,7 +220,11 @@ def main():
     args=parser.parse_args()
     args.func(args)
 
-def start(interval, outfile_template=None):
+def start(interval=0.1, outfile_template='-'):
+    '''
+    interval: Monitor interpreter every N (float) seconds.
+    outfile_template: output file.
+    '''
     tracer = Tracer(interval=interval, outfile_template=outfile_template)
     # tracer.thread.setDaemon(True) # http://bugs.python.org/issue1856
     # we use parent_thread.join(interval) now.

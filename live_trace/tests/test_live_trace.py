@@ -79,3 +79,12 @@ class Test(unittest.TestCase):
         parser=live_trace.get_argument_parser()
         args=parser.parse_args(['analyze', '--log-file', 'file-which-does-not-exist'])
         self.assertRaises(IOError, args.func, args)
+
+    def test_run_command(self):
+        parser=live_trace.get_argument_parser()
+        args=parser.parse_args(['run', 'live-trace', 'sleep', '1'])
+        try:
+            args.func(args)
+        except SystemExit, exc:
+            self.assertIn(exc.code, [None, 0])
+        
