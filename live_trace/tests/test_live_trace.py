@@ -58,7 +58,12 @@ class Test(unittest.TestCase):
         from live_trace.parser import Frame, FrameCounter
         counter=FrameCounter()
         counter.count_stacks=94
-        counter.frames={Frame(filename='File: "/usr/lib64/python2.7/threading.py", line 243, in wait', source_code='  waiter.acquire()'): 1, Frame(filename='File: "/home/foog/src/live-trace/live_trace/tests/test_live_trace.py", line 38, in test_read_logs', source_code='  time.sleep(time_to_sleep) # This line should appear'): 92}
+
+        counter.frames={
+            Frame(filename='File: "/usr/lib64/python2.7/threading.py", line 243, in wait', 
+                  source_code='  waiter.acquire()'): 1, 
+            Frame(filename='File: "/home/foog/src/live-trace/live_trace/tests/test_live_trace.py", line 38, in test_read_logs', 
+                  source_code='  time.sleep(time_to_sleep) # This line should appear'): 92}
         
         lines=list(live_trace.parser.print_counts_to_lines(args, counter))
         self.assertEqual(2, len(lines))
