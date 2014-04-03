@@ -44,7 +44,7 @@ class Test(unittest.TestCase):
         self.assertTrue(content)
 
         parser=live_trace.get_argument_parser()
-        args=parser.parse_args(['analyze', '--log-file', outfile])
+        args=parser.parse_args(['analyze', outfile])
         counter=live_trace.parser.read_logs(args)
         found=False
         for frame, count in counter.frames.items():
@@ -57,9 +57,9 @@ class Test(unittest.TestCase):
 
     def test_print_logs(self):
         parser=live_trace.get_argument_parser()
-        args=parser.parse_args(['analyze'])
+        args=parser.parse_args(['analyze', '-'])
         from live_trace.parser import Frame, FrameCounter
-        counter=FrameCounter()
+        counter=FrameCounter(args)
         counter.count_stacks=94
 
         counter.frames={
@@ -68,11 +68,11 @@ class Test(unittest.TestCase):
             Frame(filename='File: "/home/foog/src/live-trace/live_trace/tests/test_live_trace.py", line 38, in test_read_logs', 
                   source_code='  time.sleep(time_to_sleep) # This line should appear'): 92}
         
-        lines=list(live_trace.parser.print_counts_to_lines(args, counter))
+        lines=list(counter.print_counts_to_lines())
         self.assertEqual(2, len(lines))
         sleep_line=lines[0]
         self.assertIn('tests/test_live_trace.py', sleep_line)
-        self.assertIn(live_trace.parser.our_code_marker, sleep_line)
+        self.assertIn(counter.our_code_marker, sleep_line)
 
         threading_line=lines[1]
         self.assertIn('threading.py', threading_line)
@@ -80,7 +80,7 @@ class Test(unittest.TestCase):
 
     def test_non_existing_logfile(self):        
         parser=live_trace.get_argument_parser()
-        args=parser.parse_args(['analyze', '--log-file', 'file-which-does-not-exist'])
+        args=parser.parse_args(['analyze', 'file-which-does-not-exist'])
         self.assertRaises(IOError, args.func, args)
 
     def test_run_command(self):

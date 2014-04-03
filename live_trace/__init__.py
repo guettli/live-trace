@@ -154,7 +154,8 @@ class Tracer(object):
 
 def analyze(args):
     from . import parser
-    parser.read_logs(args)
+    counter=parser.read_logs(args)
+    counter.print_counts()
 
 def test(args):
     import pytest
@@ -196,7 +197,7 @@ def get_argument_parser():
     parser_analyze=subparsers.add_parser('analyze')
     parser_analyze.add_argument('--sum-all-frames', action='store_true')
     parser_analyze.add_argument('--most-common', '-m', metavar='N', default=30, type=int, help='Display the N most common lines in the stacktraces')
-    parser_analyze.add_argument('--log-file', '-l', metavar='LOGFILE', help='defaults to %s' % outfile.replace('%', '%%'), dest='logfile', default=outfile)
+    parser_analyze.add_argument('logfiles', help='defaults to %s' % outfile.replace('%', '%%'), default=[outfile], nargs='+')
     parser_analyze.set_defaults(func=analyze)
 
     parser_test=subparsers.add_parser('test')
