@@ -22,14 +22,16 @@ class FrameCounter(object):
 
     def read_logs(self):
         for logfile in self.args.logfiles:
-            self.read_logs_of_logfile(logfile)
+            with open(logfile) as fd:
+                self.read_logs_of_fd(fd)
 
-    def read_logs_of_logfile(self, logfile):
+    def read_logs_of_fd(self, fd):
+        
         # The outfile can be huge, don't read the whole file into memory.
         cur_stack=[]
         py_line=''
         code_line=''
-        for line in open(logfile):
+        for line in fd:
             if line.startswith('#END'):
                 self.count_stacks+=1
                 if self.args.sum_all_frames:

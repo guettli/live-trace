@@ -2,9 +2,12 @@ import sys
 import os, atexit, datetime
 import threading, traceback
 
-is_running=threading.Semaphore()
-is_running_stack=[] # for debugging
+import logging
+logger=logging.getLogger(__name__)
+del(logging)
 
+is_running=threading.Semaphore()
+is_running_tracer=[]
 class TracerAlreadyRunning(Exception):
     pass
 
@@ -12,36 +15,30 @@ class Tracer(object):
     stop_after_next_sleep=False
     interval=None
 
-    def __init__(self, interval=1.0, outfile_template=None):
+    def __init__(self, interval=1.0):
         if not is_running.acquire(blocking=False):
-            raise TracerAlreadyRunning(is_running_stack[-1])
+            raise TracerAlreadyRunning(is_running_tracer[0].init_stacktrace)
         # Singleton per Process
-        is_running_stack.append(traceback.format_stack())
+        self.init_stacktrace=''.join(traceback.format_stack())
+        is_running_tracer.append(self)
         self.interval=interval
-        self.outfile_template=outfile_template
         self.thread=threading.Thread(target=self.monitor)
         self.parent_thread=threading.current_thread()
         self.pid=os.getpid()
         atexit.register(self.stop)
 
-    def get_outfile(self, now=None):
-        if now is None:
-            now=datetime.datetime.now()
-        return self.outfile_template.format(now)
-    
+    @classmethod
+    def could_start(self):
+        if not is_running.acquire(blocking=False):
+            return False
+        is_running.release()
+        return True
+
     def open_outfile(self, now=None):
-        if self.outfile_template=='-':
-            return sys.stdout
-        outfile=self.get_outfile(now)
-        outfile_base=os.path.dirname(outfile)
-        if not os.path.exists(outfile_base):
-            os.makedirs(outfile_base)
-        return open(outfile, 'at')
+        raise NotImplementedError()
 
     def close_outfile(self, fd):
-        if self.outfile_template=='-':
-            return
-        fd.close()
+        raise NotImplementedError(self.__class__)
 
     def start(self):
         self.thread.start()
@@ -50,6 +47,10 @@ class Tracer(object):
         self.stop_after_next_sleep=True
         if self.thread.is_alive():
             self.thread.join()
+        try:
+            is_running_tracer.pop(-1)
+        except IndexError:
+            logger.error('is_running_init_stacktrace empty?')
         is_running.release()
 
     def monitor(self):
@@ -76,3 +77,49 @@ class Tracer(object):
         fd_out=self.open_outfile()
         fd_out.write('\n'.join(code))
         self.close_outfile(fd_out)
+
+class TracerToStream(Tracer):
+    def __init__(self, interval, stream):
+        '''
+        Example: outfile_template: '{:%Y/%m/%d}/foo.log'
+        '''
+        Tracer.__init__(self, interval)
+        self.stream=stream
+
+    def open_outfile(self):
+        return self.stream
+
+    def close_outfile(self, fd):
+        pass
+
+    
+class TracerToLogTemplate(Tracer):
+    '''
+    For long running processes: Log to file with current datetime template.
+    '''
+
+    def __init__(self, interval, outfile_template):
+        '''
+        Example: outfile_template: '{:%Y/%m/%d}/foo.log'
+        '''
+        Tracer.__init__(self, interval)
+        self.outfile_template=outfile_template
+
+    def get_outfile(self, now=None):
+        if now is None:
+            now=datetime.datetime.now()
+        return self.outfile_template.format(now)
+    
+    def open_outfile(self, now=None):
+        if self.outfile_template=='-':
+            return sys.stdout
+        outfile=self.get_outfile(now)
+        outfile_base=os.path.dirname(outfile)
+        if not os.path.exists(outfile_base):
+            os.makedirs(outfile_base)
+        return open(outfile, 'at')
+
+    def close_outfile(self, fd):
+        if self.outfile_template=='-':
+            return
+        fd.close()

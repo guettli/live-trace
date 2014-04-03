@@ -9,7 +9,7 @@ logger=logging.getLogger(__name__)
 del(logging)
 
 import live_trace
-from live_trace.tracer import Tracer, TracerAlreadyRunning
+from live_trace.tracer import Tracer, TracerToLogTemplate, TracerAlreadyRunning
 
 import pytest
 
@@ -17,8 +17,11 @@ import pytest
 class Test(unittest.TestCase):
     interval=0.01
 
+    def tearDown(self):
+        self.assertTrue(Tracer.could_start()) # please stop tracer in tests.
+
     def test_get_outfile(self):
-        tracer=Tracer(outfile_template='abc')
+        tracer=TracerToLogTemplate(self.interval, outfile_template='abc')
         self.assertEqual('abc', tracer.get_outfile())
         now=datetime.datetime(2014, 3, 26, 12, 14)
         tracer.outfile_template='{:%Y/%m/%d}/foo.log'
@@ -46,7 +49,8 @@ class Test(unittest.TestCase):
 
         parser=live_trace.get_argument_parser()
         args=parser.parse_args(['analyze', outfile])
-        counter=live_trace.parser.read_logs(args)
+        from live_trace.parser import read_logs
+        counter=read_logs(args)
         found=False
         for frame, count in counter.frames.items():
             if 'time.sleep(time_to_sleep) # This line should appear' in frame.source_code:
@@ -91,9 +95,9 @@ class Test(unittest.TestCase):
             self.assertIn(code, [0, None])
         args.func(args, on_exit_callback=on_exit)
 
-    def _________test_run_and_analyze_command(self):
+    def test_run_and_analyze_command(self):
         parser=live_trace.get_argument_parser()
-        args=parser.parse_args(['run-and-analyze', '--interval', '10', 'live-trace', 'sleep', '0.1'])
+        args=parser.parse_args(['run-and-analyze', '--interval', '0.1', 'live-trace', 'sleep', '0.1'])
         def on_exit(code):
             self.assertIn(code, [0, None])
         args.func(args)

@@ -3,6 +3,7 @@
 
 import os, re, sys, time, datetime, thread, traceback
 import argparse
+import tempfile
 
 import logging
 if __name__=='__main__':
@@ -111,26 +112,34 @@ def pre_execfile(command_args):
 
 def run(args, on_exit_callback=None):
     cmd_from_path = pre_execfile(args.command_args)
-    start(interval=args.interval, outfile_template=args.outfile)
-    run_post_trace_start(args, cmd_from_path, on_exit_callback)
+    tracer=start(interval=args.interval, outfile_template=args.outfile)
+    run_post_trace_start(args, tracer, cmd_from_path, on_exit_callback)
 
-def run_post_trace_start(args, cmd_from_path, on_exit_callback=None):
+def run_post_trace_start(args, tracer, cmd_from_path, on_exit_callback=None):
     __name__='__main__'
     try:
         execfile(cmd_from_path)
     except SystemExit, exc:
         if not on_exit_callback:
             raise
+    tracer.stop()
     on_exit_callback(args, exc.code)
 
 def run_and_analyze(args):
+    from .tracer import TracerToStream
     cmd_from_path=pre_execfile(args.command_args)
-    with tempfile.TemporaryFile() as fd:
-        start(interval=args.interval, outfile_template=args.outfile)
-        run_post_trace_start(args, cmd_from_path)
 
-def run_and_analyze_on_exit(args, code):
-    analyze(args)
+    with tempfile.TemporaryFile() as fd:
+        def run_and_analyze_on_exit(args, code):
+            from . import parser
+            counter=parser.FrameCounter(args)
+            fd.seek(0)
+            counter.read_logs_of_fd(fd)
+            counter.print_counts()
+        tracer=TracerToStream(args.interval, fd)
+        tracer.start()
+        run_post_trace_start(args, tracer, cmd_from_path, run_and_analyze_on_exit)
+        
 
 def version(args):
     import pkg_resources
@@ -139,6 +148,10 @@ def version(args):
 def sleep(args):
     time.sleep(args.secs_to_sleep)
 
+def add_analyze_args(parser):
+    parser.add_argument('--sum-all-frames', action='store_true')
+    parser.add_argument('--most-common', '-m', metavar='N', default=30, type=int, help='Display the N most common lines in the stacktraces')
+    
 DEFAULT_INTERVAL=0.1
 def get_argument_parser():
     parser=argparse.ArgumentParser(description=
@@ -147,8 +160,7 @@ def get_argument_parser():
     subparsers = parser.add_subparsers(title='subcommands',
                                        description='valid subcommands')
     parser_analyze=subparsers.add_parser('analyze')
-    parser_analyze.add_argument('--sum-all-frames', action='store_true')
-    parser_analyze.add_argument('--most-common', '-m', metavar='N', default=30, type=int, help='Display the N most common lines in the stacktraces')
+    add_analyze_args(parser_analyze)
     parser_analyze.add_argument('logfiles', help='defaults to %s' % outfile.replace('%', '%%'), default=[outfile], nargs='+')
     parser_analyze.set_defaults(func=analyze)
 
@@ -164,6 +176,7 @@ def get_argument_parser():
     parser_run_and_analyze=subparsers.add_parser('run-and-analyze')
     parser_run_and_analyze.set_defaults(func=run_and_analyze)
     parser_run_and_analyze.add_argument('--interval', metavar='FLOAT_SECS', help='Dump stracktraces every FLOAT_SECS seconds.', default=DEFAULT_INTERVAL, type=float)
+    add_analyze_args(parser_run_and_analyze)
     parser_run_and_analyze.add_argument('command_args', nargs=argparse.PARSER)
 
     parser_version=subparsers.add_parser('version')
@@ -184,8 +197,8 @@ def start(interval=0.1, outfile_template='-'):
     interval: Monitor interpreter every N (float) seconds.
     outfile_template: output file.
     '''
-    from .tracer import Tracer
-    tracer = Tracer(interval=interval, outfile_template=outfile_template)
+    from .tracer import TracerToLogTemplate
+    tracer = TracerToLogTemplate(interval=interval, outfile_template=outfile_template)
     # tracer.thread.setDaemon(True) # http://bugs.python.org/issue1856
     # we use parent_thread.join(interval) now.
     # http://stackoverflow.com/questions/16731115/how-to-debug-a-python-seg-fault
