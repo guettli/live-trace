@@ -204,8 +204,8 @@ def get_argument_parser():
 
     parser_run=subparsers.add_parser('run')
     parser_run.set_defaults(func=run)
-    parser_run.add_argument('--out-file',  metavar='LOGFILE', help='defaults to %s' % outfile.replace('%', '%%'), dest='outfile', default=outfile)
-    parser_run.add_argument('command_args', nargs='*')
+    parser_run.add_argument('--out-file', metavar='LOGFILE', help='defaults to %s' % outfile.replace('%', '%%'), dest='outfile', default=outfile)
+    parser_run.add_argument('command_args', nargs=argparse.PARSER)
 
     parser_version=subparsers.add_parser('version')
     parser_version.set_defaults(func=version)

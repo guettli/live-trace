@@ -10,6 +10,9 @@ del(logging)
 
 import live_trace
 
+import pytest
+
+@pytest.mark.readonlysdf
 class Test(unittest.TestCase):
     interval=0.01
 
