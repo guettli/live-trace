@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Initial Code from djangotools/utils/debug_live.py
 
-import os, re, sys, time, datetime, thread, threading, atexit, traceback
+import os, re, sys, time, datetime, thread, traceback
 import argparse
 
 import logging
@@ -74,8 +74,6 @@ python ..../live_trace.py read
 
 '''
 
-class TracerAlreadyRunning(Exception):
-    pass
 
 
 outfile_dir=os.path.expanduser('~/tmp/live_trace')
@@ -83,74 +81,7 @@ outfile=os.path.join(outfile_dir, '{:%Y-%m-%d-%H-%M-%S}.log')
 
 monitor_thread=None
 
-is_running=threading.Semaphore()
 
-class Tracer(object):
-    stop_after_next_sleep=False
-    interval=None
-
-    def __init__(self, interval=1.0, outfile_template=None):
-        if not is_running.acquire(blocking=False):
-            raise TracerAlreadyRunning()
-        self.interval=interval
-        self.outfile_template=outfile_template
-        self.thread=threading.Thread(target=self.monitor)
-        self.parent_thread=threading.current_thread()
-        self.pid=os.getpid()
-        atexit.register(self.stop)
-
-    def get_outfile(self, now=None):
-        if now is None:
-            now=datetime.datetime.now()
-        return self.outfile_template.format(now)
-    
-    def open_outfile(self, now=None):
-        if self.outfile_template=='-':
-            return sys.stdout
-        outfile=self.get_outfile(now)
-        outfile_base=os.path.dirname(outfile)
-        if not os.path.exists(outfile_base):
-            os.makedirs(outfile_base)
-        return open(outfile, 'at')
-
-    def close_outfile(self, fd):
-        if self.outfile_template=='-':
-            return
-        fd.close()
-
-    def start(self):
-        self.thread.start()
-
-    def stop(self):
-        self.stop_after_next_sleep=True
-        if self.thread.is_alive():
-            self.thread.join()
-        is_running.release()
-
-    def monitor(self):
-        while not self.stop_after_next_sleep:
-            self.parent_thread.join(self.interval)
-            if not self.parent_thread.is_alive():
-                break
-            self.log_stacktraces()
-
-    def log_stacktraces(self):
-        code=[]
-        now=datetime.datetime.now()
-        for thread_id, stack in sys._current_frames().items():
-            if thread_id==self.thread.ident:
-                continue # Don't print this monitor thread
-            code.append("\n\n#START date: %s\n# ProcessId: %s\n# ThreadID: %s" % (now, self.pid, thread_id))
-            for filename, lineno, name, line in traceback.extract_stack(stack):
-                code.append('File: "%s", line %d, in %s' % (filename, lineno, name))
-                if line:
-                    code.append("  %s" % (line.strip()))
-            code.append('#END')
-        if not code:
-            return
-        fd_out=self.open_outfile()
-        fd_out.write('\n'.join(code))
-        self.close_outfile(fd_out)
 
 def analyze(args):
     from . import parser
@@ -162,24 +93,44 @@ def test(args):
     errno = pytest.main(['--pyargs', 'live_trace'])
     sys.exit(errno)
 
-def run(args):
-    command_args=list(args.command_args)
-    cmd=command_args.pop(0)
+def get_command_from_path(cmd):
     if os.path.exists(cmd):
-        found=cmd
-    else:
-        found=None
-        for path in os.environ.get('PATH', '').split(os.pathsep):
-            cmd_try=os.path.join(path, cmd)
-            if os.path.exists(cmd_try):
-                found=cmd_try
-                break
-        if not found:
-            raise ValueError('Command not found: %s' % cmd)
-    start(outfile_template=args.outfile)
-    sys.argv=args.command_args
+        return cmd
+    for path in os.environ.get('PATH', '').split(os.pathsep):
+        cmd_try=os.path.join(path, cmd)
+        if os.path.exists(cmd_try):
+            return cmd_try
+    raise ValueError('Command not found: %s' % cmd)
+
+def pre_execfile(command_args):
+    command_args=list(command_args)
+    cmd=command_args[0]
+    sys.argv=command_args
+    cmd_from_path=get_command_from_path(cmd)
+    return cmd_from_path
+
+def run(args, on_exit_callback=None):
+    cmd_from_path = pre_execfile(args.command_args)
+    start(interval=args.interval, outfile_template=args.outfile)
+    run_post_trace_start(args, cmd_from_path, on_exit_callback)
+
+def run_post_trace_start(args, cmd_from_path, on_exit_callback=None):
     __name__='__main__'
-    execfile(found)
+    try:
+        execfile(cmd_from_path)
+    except SystemExit, exc:
+        if not on_exit_callback:
+            raise
+    on_exit_callback(args, exc.code)
+
+def run_and_analyze(args):
+    cmd_from_path=pre_execfile(args.command_args)
+    with tempfile.TemporaryFile() as fd:
+        start(interval=args.interval, outfile_template=args.outfile)
+        run_post_trace_start(args, cmd_from_path)
+
+def run_and_analyze_on_exit(args, code):
+    analyze(args)
 
 def version(args):
     import pkg_resources
@@ -188,6 +139,7 @@ def version(args):
 def sleep(args):
     time.sleep(args.secs_to_sleep)
 
+DEFAULT_INTERVAL=0.1
 def get_argument_parser():
     parser=argparse.ArgumentParser(description=
 '''Read stacktraces log which where created by live_trace. Logs are searched in %s. By default a new file is created for every day. If unsure, use sum-last-frame without other arguments to see the summary of today's output.\n\nlive_trace: A "daemon" thread monitors the process and writes out stracktraces of every N (float) seconds. This command line tool helps to see where the interpreter spent the most time.\n\nEvery stacktrace has several frames (call stack). In most cases you want to see "sum-last-frame" ("last" means "deepest" frames: that's where the interpreter was interrupted by the monitor thread). A simple regex tries to mark our code (vs python/django code) with <====.''' % (outfile_dir))
@@ -206,7 +158,13 @@ def get_argument_parser():
     parser_run=subparsers.add_parser('run')
     parser_run.set_defaults(func=run)
     parser_run.add_argument('--out-file', metavar='LOGFILE', help='defaults to %s' % outfile.replace('%', '%%'), dest='outfile', default=outfile)
+    parser_run.add_argument('--interval', metavar='FLOAT_SECS', help='Dump stracktraces every FLOAT_SECS seconds.', default=DEFAULT_INTERVAL, type=float)
     parser_run.add_argument('command_args', nargs=argparse.PARSER)
+
+    parser_run_and_analyze=subparsers.add_parser('run-and-analyze')
+    parser_run_and_analyze.set_defaults(func=run_and_analyze)
+    parser_run_and_analyze.add_argument('--interval', metavar='FLOAT_SECS', help='Dump stracktraces every FLOAT_SECS seconds.', default=DEFAULT_INTERVAL, type=float)
+    parser_run_and_analyze.add_argument('command_args', nargs=argparse.PARSER)
 
     parser_version=subparsers.add_parser('version')
     parser_version.set_defaults(func=version)
@@ -226,6 +184,7 @@ def start(interval=0.1, outfile_template='-'):
     interval: Monitor interpreter every N (float) seconds.
     outfile_template: output file.
     '''
+    from .tracer import Tracer
     tracer = Tracer(interval=interval, outfile_template=outfile_template)
     # tracer.thread.setDaemon(True) # http://bugs.python.org/issue1856
     # we use parent_thread.join(interval) now.
