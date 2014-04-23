@@ -2,6 +2,9 @@ import sys
 import os, atexit, datetime
 import threading, traceback
 
+# http://stackoverflow.com/questions/13193278/understand-python-threading-bug
+threading._DummyThread._Thread__stop = lambda x: True
+
 import logging
 logger=logging.getLogger(__name__)
 del(logging)
