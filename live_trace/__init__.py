@@ -33,18 +33,13 @@ optional arguments:
 
 You can start the watching thread your django middleware like this:
 
-class FOOMiddleware:
-    def __init__(self):
-        u'This code gets executed once after the start of the wsgi worker process. Not for every request!'
-        seconds=getattr(settings, 'live_trace_interval', None)
-        if seconds:
-            import live_trace
-            live_trace.start(seconds)
+MIDDLEWARE_CLASSES=[
+    ...
+    'live_trace.django_middleware.LiveTraceMiddleware',
+]
 
 # settings.py
 live_trace_interval=0.3 # ever 0.3 second
-
-# Inspired by http://code.google.com/p/modwsgi/wiki/DebuggingTechniques
 
 You can get a simple report of the log file of stacktraces like below. The lines
 which are not from django are marked with "<====". That's most likely your code
@@ -81,8 +76,6 @@ outfile_dir=os.path.expanduser('~/tmp/live_trace')
 outfile=os.path.join(outfile_dir, '{:%Y-%m-%d-%H-%M-%S}.log')
 
 monitor_thread=None
-
-
 
 def analyze(args):
     from . import parser
