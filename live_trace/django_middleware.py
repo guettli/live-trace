@@ -9,4 +9,8 @@ class LiveTraceMiddleware:
         if not seconds:
             return
         import live_trace
-        live_trace.start(seconds, live_trace.outfile)
+        try:
+            live_trace.start(seconds, live_trace.outfile)
+        except live_trace.tracer.TracerAlreadyRunning:
+            # During tests the middleware gets loaded several times.
+            return
