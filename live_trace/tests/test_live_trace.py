@@ -102,3 +102,10 @@ class Test(unittest.TestCase):
             self.assertIn(code, [0, None])
         args.func(args)
         
+    def test_stop_is_fast(self):
+        live_trace.start(0.01)
+        start_time=time.time()
+        live_trace.stop()
+        duration=time.time() - start_time
+        self.assertTrue(Tracer.could_start())
+        self.assertLessEqual(duration, 0.04)

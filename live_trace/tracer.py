@@ -37,6 +37,11 @@ class Tracer(object):
         is_running.release()
         return True
 
+    @classmethod
+    def global_stop(cls):
+        for tracer in is_running_tracer:
+            tracer.stop()
+
     def open_outfile(self, now=None):
         raise NotImplementedError()
 
@@ -53,7 +58,7 @@ class Tracer(object):
         try:
             is_running_tracer.pop(-1)
         except IndexError:
-            logger.error('is_running_init_stacktrace empty?')
+            logger.error('is_running_tracer empty?')
         is_running.release()
 
     def monitor(self):
