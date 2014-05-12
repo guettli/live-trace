@@ -200,3 +200,6 @@ def start(interval=0.1, outfile_template='-'):
     tracer.start()
     return tracer
 
+def stop():
+    from .tracer import Tracer
+    Tracer.global_stop()
