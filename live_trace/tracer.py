@@ -58,7 +58,7 @@ class Tracer(object):
         try:
             is_running_tracer.pop(-1)
         except IndexError:
-            logger.error('is_running_tracer empty?')
+            return
         is_running.release()
 
     def monitor(self):
