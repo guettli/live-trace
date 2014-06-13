@@ -4,6 +4,7 @@ import pip.req
 from setuptools.command.test import test as TestCommand
 import sys
 
+
 class PyTest(TestCommand):
 
     def finalize_options(self):
@@ -12,7 +13,7 @@ class PyTest(TestCommand):
         self.test_suite = True
 
     def run_tests(self):
-        #import here, cause outside the eggs aren't loaded
+        # import here, cause outside the eggs aren't loaded
         import pytest
         errno = pytest.main(self.test_args)
         sys.exit(errno)
@@ -26,11 +27,11 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=[],
 
-    cmdclass = {'test': PyTest},
+    cmdclass={'test': PyTest},
 
     entry_points={
         'console_scripts': [
             'live-trace=live_trace:main',
-            ],
-        }
-    )
+        ],
+    }
+)
