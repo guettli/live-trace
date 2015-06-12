@@ -33,8 +33,13 @@ class TracerUsingBackgroundThread(Tracer):
         self.interval = interval
         self.thread = threading.Thread(target=self.monitor)
         self.parent_thread = threading.current_thread()
-        self.pid = os.getpid()
         atexit.register(self.stop)
+
+    def get_current_frames(self):
+        for thread_id, stack in super(TracerUsingBackgroundThread, self).get_current_frames():
+            if thread_id == self.thread.ident:
+                continue  # Don't print this monitor thread
+            yield thread_id, stack
 
     @classmethod
     def could_start(cls):

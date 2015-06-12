@@ -4,19 +4,15 @@ import datetime
 import tempfile
 import unittest
 
-import logging
 from live_trace.writer import WriterToLogTemplate
 
+import logging
 logger = logging.getLogger(__name__)
 del (logging)
 
 from live_trace.tracerusingbackgroundthread import TracerUsingBackgroundThread, TracerAlreadyRunning
 from live_trace import main
 
-import pytest
-
-
-@pytest.mark.readonlysdf
 class Test(unittest.TestCase):
     interval = 0.01
 
@@ -50,7 +46,7 @@ class Test(unittest.TestCase):
         content = open(outfile).read()
         self.assertTrue(content)
 
-        parser = main.get_argument_parser()
+        parser = main.ArgumentParser()
         args = parser.parse_args(['analyze', outfile])
         from live_trace.parser import read_logs
 
@@ -67,7 +63,7 @@ class Test(unittest.TestCase):
         self.assertIn('test_tracer_using_background_thread.py', frame.filename, (frame.filename, outfile))
 
     def test_print_logs(self):
-        parser = main.get_argument_parser()
+        parser = main.ArgumentParser()
         args = parser.parse_args(['analyze', '-'])
         from live_trace.parser import Frame, FrameCounter
 
@@ -92,12 +88,12 @@ class Test(unittest.TestCase):
         self.assertIn('waiter.acquire()', threading_line)
 
     def test_non_existing_logfile(self):
-        parser = main.get_argument_parser()
+        parser = main.ArgumentParser()
         args = parser.parse_args(['analyze', 'file-which-does-not-exist'])
         self.assertRaises(IOError, args.func, args)
 
     def test_run_command(self):
-        parser = main.get_argument_parser()
+        parser = main.ArgumentParser()
         args = parser.parse_args(['run', '--interval', '10', 'live-trace', 'sleep', '0.1'])
 
         def on_exit(args, code):
@@ -106,7 +102,7 @@ class Test(unittest.TestCase):
         args.func(args, on_exit_callback=on_exit)
 
     def test_run_and_analyze_command(self):
-        parser = main.get_argument_parser()
+        parser = main.ArgumentParser()
         args = parser.parse_args(['run-and-analyze', '--interval', '0.1', 'live-trace', 'sleep', '0.1'])
 
         def on_exit(code):

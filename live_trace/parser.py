@@ -1,5 +1,6 @@
 import re
 import collections
+from live_trace.main import ArgumentParser
 
 other_code = re.compile(r'/(django|python...)/')
 
@@ -20,6 +21,7 @@ class FrameCounter(object):
     count_stacks = 0
 
     def __init__(self, args):
+        assert isinstance(args, ArgumentParser.Namespace), args
         self.args = args
         self.frames = dict()
 
