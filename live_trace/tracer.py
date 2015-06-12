@@ -2,7 +2,7 @@ import datetime
 import os
 import sys
 import traceback
-from live_trace.writer import BaseWriter
+from live_trace.writer import BaseWriter, WriterToLogTemplate
 
 
 class Tracer(object):
@@ -30,3 +30,7 @@ class Tracer(object):
 
     def get_current_frames(self):
         return sys._current_frames().items()
+
+    @classmethod
+    def log_stracktraces_to_file(cls, outfile):
+        cls(WriterToLogTemplate(outfile)).log_stacktraces()

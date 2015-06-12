@@ -10,7 +10,7 @@ from live_trace.writer import WriterToLogTemplate
 class Test(unittest.TestCase):
     def test_manual_writing(self):
         outfile = tempfile.mktemp(prefix='test_manual_writing_', suffix='.log')
-        Tracer(WriterToLogTemplate(outfile)).log_stacktraces()
+        Tracer.log_stracktraces_to_file(outfile)
         args = ArgumentParser.Namespace()
         args.logfiles.append(outfile)
         frame_counter = FrameCounter(args)
