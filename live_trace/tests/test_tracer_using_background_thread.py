@@ -5,6 +5,7 @@ import tempfile
 import unittest
 
 import logging
+from live_trace.writer import WriterToLogTemplate
 
 logger = logging.getLogger(__name__)
 del (logging)
@@ -23,15 +24,15 @@ class Test(unittest.TestCase):
         self.assertTrue(TracerUsingBackgroundThread.could_start())  # please stop tracer in tests.
 
     def test_get_outfile(self):
-        tracer = TracerUsingBackgroundThread(self.interval, outfile_template='abc')
-        self.assertEqual('abc', tracer.get_outfile())
+        tracer = TracerUsingBackgroundThread(WriterToLogTemplate(outfile_template='abc'), self.interval)
+        self.assertEqual('abc', tracer.writer.get_outfile())
         now = datetime.datetime(2014, 3, 26, 12, 14)
-        tracer.outfile_template = '{:%Y/%m/%d}/foo.log'
-        self.assertEqual('2014/03/26/foo.log', tracer.get_outfile(now=now))
+        tracer.writer.outfile_template = '{:%Y/%m/%d}/foo.log'
+        self.assertEqual('2014/03/26/foo.log', tracer.writer.get_outfile(now=now))
 
         out_dir = tempfile.mktemp(prefix='live_trace_get_outfile')
-        tracer.outfile_template = os.path.join(out_dir, '{:%Y/%m/%d}/foo.log')
-        tracer.open_outfile(now=now)
+        tracer.writer.outfile_template = os.path.join(out_dir, '{:%Y/%m/%d}/foo.log')
+        tracer.writer.open_outfile(now=now)
         self.assertTrue(os.path.exists(os.path.join(out_dir, '2014/03/26')))
         tracer.stop()
 

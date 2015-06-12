@@ -23,8 +23,8 @@ class TracerUsingBackgroundThread(Tracer):
     stop_after_next_sleep = False
     interval = None
 
-    def __init__(self, writer_class, interval=1.0):
-        super(TracerUsingBackgroundThread, self).__init__(writer_class)
+    def __init__(self, writer, interval=1.0):
+        super(TracerUsingBackgroundThread, self).__init__(writer)
 
         if not is_running.acquire(blocking=False):
             raise TracerAlreadyRunning(is_running_tracer[0].init_stacktrace)

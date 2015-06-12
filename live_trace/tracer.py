@@ -1,11 +1,15 @@
 import datetime
 import sys
 import traceback
+from live_trace.writer import BaseWriter
 
 
 class Tracer(object):
-    def __init__(self, writer_class):
-        self.writer = writer_class()
+    def __init__(self, writer):
+        assert isinstance(writer, BaseWriter), writer
+        self.writer = writer
+        self.init_stacktrace = ''.join(traceback.format_stack())
+
 
     def log_stacktraces(self):
         code = []

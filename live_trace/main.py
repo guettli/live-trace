@@ -12,6 +12,8 @@ import argparse
 import tempfile
 
 import logging
+from live_trace.tracerusingbackgroundthread import TracerUsingBackgroundThread
+
 if __name__ == '__main__':
     logger = logging.getLogger(os.path.basename(sys.argv[0]))
 else:
@@ -131,7 +133,7 @@ def run_post_trace_start(args, tracer, cmd_from_path, on_exit_callback=None):
 
 
 def run_and_analyze(args):
-    from .tracerusingbackgroundthread import WriterToStream
+    from .writer import WriterToStream
     cmd_from_path = pre_execfile(args.command_args)
 
     with tempfile.TemporaryFile() as fd:
@@ -141,9 +143,9 @@ def run_and_analyze(args):
             fd.seek(0)
             counter.read_logs_of_fd(fd)
             counter.print_counts()
-        tracer = TracerUsingBackgroundThread(WriterToStream, args.interval)
-        tracerusingbackgroundthread.start()
-        run_post_trace_start(args, tracerusingbackgroundthread, cmd_from_path, run_and_analyze_on_exit)
+        tracer = TracerUsingBackgroundThread(WriterToStream(fd), args.interval)
+        tracer.start()
+        run_post_trace_start(args, tracer, cmd_from_path, run_and_analyze_on_exit)
 
 
 def version(args):
@@ -207,15 +209,15 @@ def start(interval=0.1, outfile_template='-'):
     interval: Monitor interpreter every N (float) seconds.
     outfile_template: output file.
     '''
-    from .tracerusingbackgroundthread import WriterToLogTemplate
-    tracer = WriterToLogTemplate(interval=interval, outfile_template=outfile_template)
+    from .writer import WriterToLogTemplate
+    tracer = TracerUsingBackgroundThread(WriterToLogTemplate(outfile_template=outfile_template), interval=interval)
     # tracer.thread.setDaemon(True) # http://bugs.python.org/issue1856
     # we use parent_thread.join(interval) now.
     # http://stackoverflow.com/questions/16731115/how-to-debug-a-python-seg-fault
     # http://stackoverflow.com/questions/18098475/detect-interpreter-shut-down-in-daemon-thread
 
-    tracerusingbackgroundthread.start()
-    return tracerusingbackgroundthread
+    tracer.start()
+    return tracer
 
 
 def stop():
