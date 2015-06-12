@@ -1,22 +1,21 @@
 import setuptools
-import pip.req
-
-from setuptools.command.test import test as TestCommand
-import sys
 
 
-class PyTest(TestCommand):
+class PyTest(setuptools.Command):
+    user_options = []
+
+    def initialize_options(self):
+        pass
 
     def finalize_options(self):
-        TestCommand.finalize_options(self)
-        self.test_args = ['--pyargs', 'live_trace']
-        self.test_suite = True
+        pass
 
-    def run_tests(self):
-        # import here, cause outside the eggs aren't loaded
-        import pytest
-        errno = pytest.main(self.test_args)
-        sys.exit(errno)
+    def run(self):
+        import subprocess
+        import sys
+
+        errno = subprocess.call([sys.executable, 'runtests.py'])
+        raise SystemExit(errno)
 
 
 setuptools.setup(
@@ -31,7 +30,7 @@ setuptools.setup(
 
     entry_points={
         'console_scripts': [
-            'live-trace=live_trace:main',
+            'live-trace=live_trace:main.main',
         ],
     }
 )

@@ -5,11 +5,12 @@ import tempfile
 import unittest
 
 import logging
-logger = logging.getLogger(__name__)
-del(logging)
 
-import live_trace
-from live_trace.tracer import Tracer, TracerToLogTemplate, TracerAlreadyRunning
+logger = logging.getLogger(__name__)
+del (logging)
+
+from live_trace.tracerusingbackgroundthread import TracerUsingBackgroundThread, TracerAlreadyRunning
+from live_trace import main
 
 import pytest
 
@@ -19,10 +20,10 @@ class Test(unittest.TestCase):
     interval = 0.01
 
     def tearDown(self):
-        self.assertTrue(Tracer.could_start())  # please stop tracer in tests.
+        self.assertTrue(TracerUsingBackgroundThread.could_start())  # please stop tracer in tests.
 
     def test_get_outfile(self):
-        tracer = TracerToLogTemplate(self.interval, outfile_template='abc')
+        tracer = TracerUsingBackgroundThread(self.interval, outfile_template='abc')
         self.assertEqual('abc', tracer.get_outfile())
         now = datetime.datetime(2014, 3, 26, 12, 14)
         tracer.outfile_template = '{:%Y/%m/%d}/foo.log'
@@ -37,9 +38,9 @@ class Test(unittest.TestCase):
     def test_read_logs(self):
         outfile = tempfile.mktemp(prefix='live_trace_test_output', suffix='.log')
         logger.info('outfile: %s' % outfile)
-        monitor_thread = live_trace.start(self.interval, outfile_template=outfile)
+        monitor_thread = main.start(self.interval, outfile_template=outfile)
 
-        self.assertRaises(TracerAlreadyRunning, live_trace.start, (self.interval,), **dict(outfile_template=outfile))
+        self.assertRaises(TracerAlreadyRunning, main.start, (self.interval,), **dict(outfile_template=outfile))
 
         time_to_sleep = 0.01
         for i in xrange(100):
@@ -48,9 +49,10 @@ class Test(unittest.TestCase):
         content = open(outfile).read()
         self.assertTrue(content)
 
-        parser = live_trace.get_argument_parser()
+        parser = main.get_argument_parser()
         args = parser.parse_args(['analyze', outfile])
         from live_trace.parser import read_logs
+
         counter = read_logs(args)
         found = False
         for frame, count in counter.frames.items():
@@ -59,25 +61,27 @@ class Test(unittest.TestCase):
                 break
         self.assertGreater(count, 60)
         self.assertGreater(120, count)
-        self.assertIn('test_live_trace.py', frame.filename)
+        self.assertIn('test_tracer_using_background_thread.py', frame.filename)
 
     def test_print_logs(self):
-        parser = live_trace.get_argument_parser()
+        parser = main.get_argument_parser()
         args = parser.parse_args(['analyze', '-'])
         from live_trace.parser import Frame, FrameCounter
+
         counter = FrameCounter(args)
         counter.count_stacks = 94
 
         counter.frames = {
             Frame(filename='File: "/usr/lib64/python2.7/threading.py", line 243, in wait',
                   source_code='  waiter.acquire()'): 1,
-            Frame(filename='File: "/home/foog/src/live-trace/live_trace/tests/test_live_trace.py", line 38, in test_read_logs',
-                  source_code='  time.sleep(time_to_sleep) # This line should appear'): 92}
+            Frame(
+                filename='File: "/home/foog/src/live-trace/live_trace/tests/test_tracer_using_background_thread.py", line 38, in test_read_logs',
+                source_code='  time.sleep(time_to_sleep) # This line should appear'): 92}
 
         lines = list(counter.print_counts_to_lines())
         self.assertEqual(2, len(lines))
         sleep_line = lines[0]
-        self.assertIn('tests/test_live_trace.py', sleep_line)
+        self.assertIn('tests/test_tracer_using_background_thread.py', sleep_line)
         self.assertIn(counter.our_code_marker, sleep_line)
 
         threading_line = lines[1]
@@ -85,30 +89,32 @@ class Test(unittest.TestCase):
         self.assertIn('waiter.acquire()', threading_line)
 
     def test_non_existing_logfile(self):
-        parser = live_trace.get_argument_parser()
+        parser = main.get_argument_parser()
         args = parser.parse_args(['analyze', 'file-which-does-not-exist'])
         self.assertRaises(IOError, args.func, args)
 
     def test_run_command(self):
-        parser = live_trace.get_argument_parser()
+        parser = main.get_argument_parser()
         args = parser.parse_args(['run', '--interval', '10', 'live-trace', 'sleep', '0.1'])
 
         def on_exit(args, code):
             self.assertIn(code, [0, None])
+
         args.func(args, on_exit_callback=on_exit)
 
     def test_run_and_analyze_command(self):
-        parser = live_trace.get_argument_parser()
+        parser = main.get_argument_parser()
         args = parser.parse_args(['run-and-analyze', '--interval', '0.1', 'live-trace', 'sleep', '0.1'])
 
         def on_exit(code):
             self.assertIn(code, [0, None])
+
         args.func(args)
 
     def test_stop_is_fast(self):
-        live_trace.start(0.01)
+        main.start(0.01)
         start_time = time.time()
-        live_trace.stop()
+        main.stop()
         duration = time.time() - start_time
-        self.assertTrue(Tracer.could_start())
+        self.assertTrue(TracerUsingBackgroundThread.could_start())
         self.assertLessEqual(duration, 0.04)
