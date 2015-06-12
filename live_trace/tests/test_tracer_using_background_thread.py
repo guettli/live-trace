@@ -4,18 +4,15 @@ import datetime
 import tempfile
 import unittest
 
-import logging
+from live_trace.writer import WriterToLogTemplate
 
+import logging
 logger = logging.getLogger(__name__)
 del (logging)
 
 from live_trace.tracerusingbackgroundthread import TracerUsingBackgroundThread, TracerAlreadyRunning
 from live_trace import main
 
-import pytest
-
-
-@pytest.mark.readonlysdf
 class Test(unittest.TestCase):
     interval = 0.01
 
@@ -23,15 +20,15 @@ class Test(unittest.TestCase):
         self.assertTrue(TracerUsingBackgroundThread.could_start())  # please stop tracer in tests.
 
     def test_get_outfile(self):
-        tracer = TracerUsingBackgroundThread(self.interval, outfile_template='abc')
-        self.assertEqual('abc', tracer.get_outfile())
+        tracer = TracerUsingBackgroundThread(WriterToLogTemplate(outfile_template='abc'), self.interval)
+        self.assertEqual('abc', tracer.writer.get_outfile())
         now = datetime.datetime(2014, 3, 26, 12, 14)
-        tracer.outfile_template = '{:%Y/%m/%d}/foo.log'
-        self.assertEqual('2014/03/26/foo.log', tracer.get_outfile(now=now))
+        tracer.writer.outfile_template = '{:%Y/%m/%d}/foo.log'
+        self.assertEqual('2014/03/26/foo.log', tracer.writer.get_outfile(now=now))
 
         out_dir = tempfile.mktemp(prefix='live_trace_get_outfile')
-        tracer.outfile_template = os.path.join(out_dir, '{:%Y/%m/%d}/foo.log')
-        tracer.open_outfile(now=now)
+        tracer.writer.outfile_template = os.path.join(out_dir, '{:%Y/%m/%d}/foo.log')
+        tracer.writer.open_outfile(now=now)
         self.assertTrue(os.path.exists(os.path.join(out_dir, '2014/03/26')))
         tracer.stop()
 
@@ -44,27 +41,29 @@ class Test(unittest.TestCase):
 
         time_to_sleep = 0.01
         for i in xrange(100):
-            time.sleep(time_to_sleep)  # This line should appear
+            time.sleep(time_to_sleep) # This line should appear in log
         monitor_thread.stop()
         content = open(outfile).read()
         self.assertTrue(content)
 
-        parser = main.get_argument_parser()
+        parser = main.ArgumentParser()
         args = parser.parse_args(['analyze', outfile])
         from live_trace.parser import read_logs
 
         counter = read_logs(args)
         found = False
+        magic='time.sleep(time_to_sleep) # This line should appear in log'
         for frame, count in counter.frames.items():
-            if 'time.sleep(time_to_sleep) # This line should appear' in frame.source_code:
+            if magic in frame.source_code:
                 found = True
                 break
-        self.assertGreater(count, 60)
-        self.assertGreater(120, count)
-        self.assertIn('test_tracer_using_background_thread.py', frame.filename)
+        self.assertTrue(found, 'magic %r not found in %s' % (magic, outfile))
+        self.assertGreater(count, 60, outfile)
+        self.assertGreater(120, count, outfile)
+        self.assertIn('test_tracer_using_background_thread.py', frame.filename, (frame.filename, outfile))
 
     def test_print_logs(self):
-        parser = main.get_argument_parser()
+        parser = main.ArgumentParser()
         args = parser.parse_args(['analyze', '-'])
         from live_trace.parser import Frame, FrameCounter
 
@@ -89,12 +88,12 @@ class Test(unittest.TestCase):
         self.assertIn('waiter.acquire()', threading_line)
 
     def test_non_existing_logfile(self):
-        parser = main.get_argument_parser()
+        parser = main.ArgumentParser()
         args = parser.parse_args(['analyze', 'file-which-does-not-exist'])
         self.assertRaises(IOError, args.func, args)
 
     def test_run_command(self):
-        parser = main.get_argument_parser()
+        parser = main.ArgumentParser()
         args = parser.parse_args(['run', '--interval', '10', 'live-trace', 'sleep', '0.1'])
 
         def on_exit(args, code):
@@ -103,7 +102,7 @@ class Test(unittest.TestCase):
         args.func(args, on_exit_callback=on_exit)
 
     def test_run_and_analyze_command(self):
-        parser = main.get_argument_parser()
+        parser = main.ArgumentParser()
         args = parser.parse_args(['run-and-analyze', '--interval', '0.1', 'live-trace', 'sleep', '0.1'])
 
         def on_exit(code):

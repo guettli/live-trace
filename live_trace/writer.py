@@ -32,7 +32,7 @@ class WriterToLogTemplate(BaseWriter):
     For long running processes: Log to file with current datetime template.
     '''
 
-    def __init__(self, interval, outfile_template):
+    def __init__(self, outfile_template):
         '''
         Example: outfile_template: '{:%Y/%m/%d}/foo.log'
         '''

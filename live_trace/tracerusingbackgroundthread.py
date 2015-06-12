@@ -23,8 +23,8 @@ class TracerUsingBackgroundThread(Tracer):
     stop_after_next_sleep = False
     interval = None
 
-    def __init__(self, writer_class, interval=1.0):
-        super(TracerUsingBackgroundThread, self).__init__(writer_class)
+    def __init__(self, writer, interval=1.0):
+        super(TracerUsingBackgroundThread, self).__init__(writer)
 
         if not is_running.acquire(blocking=False):
             raise TracerAlreadyRunning(is_running_tracer[0].init_stacktrace)
@@ -33,8 +33,13 @@ class TracerUsingBackgroundThread(Tracer):
         self.interval = interval
         self.thread = threading.Thread(target=self.monitor)
         self.parent_thread = threading.current_thread()
-        self.pid = os.getpid()
         atexit.register(self.stop)
+
+    def get_current_frames(self):
+        for thread_id, stack in super(TracerUsingBackgroundThread, self).get_current_frames():
+            if thread_id == self.thread.ident:
+                continue  # Don't print this monitor thread
+            yield thread_id, stack
 
     @classmethod
     def could_start(cls):

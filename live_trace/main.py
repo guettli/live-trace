@@ -12,6 +12,8 @@ import argparse
 import tempfile
 
 import logging
+from live_trace.tracerusingbackgroundthread import TracerUsingBackgroundThread
+
 if __name__ == '__main__':
     logger = logging.getLogger(os.path.basename(sys.argv[0]))
 else:
@@ -131,7 +133,7 @@ def run_post_trace_start(args, tracer, cmd_from_path, on_exit_callback=None):
 
 
 def run_and_analyze(args):
-    from .tracerusingbackgroundthread import WriterToStream
+    from .writer import WriterToStream
     cmd_from_path = pre_execfile(args.command_args)
 
     with tempfile.TemporaryFile() as fd:
@@ -141,9 +143,9 @@ def run_and_analyze(args):
             fd.seek(0)
             counter.read_logs_of_fd(fd)
             counter.print_counts()
-        tracer = TracerUsingBackgroundThread(WriterToStream, args.interval)
-        tracerusingbackgroundthread.start()
-        run_post_trace_start(args, tracerusingbackgroundthread, cmd_from_path, run_and_analyze_on_exit)
+        tracer = TracerUsingBackgroundThread(WriterToStream(fd), args.interval)
+        tracer.start()
+        run_post_trace_start(args, tracer, cmd_from_path, run_and_analyze_on_exit)
 
 
 def version(args):
@@ -161,43 +163,56 @@ def add_analyze_args(parser):
 
 DEFAULT_INTERVAL = 0.1
 
+class Namespace(argparse.Namespace):
+    logfiles=[]
+    sum_all_frames=False
 
-def get_argument_parser():
-    parser = argparse.ArgumentParser(description='''Read stacktraces log which where created by live_trace. Logs are searched in %s. By default a new file is created for every day. If unsure, use sum-last-frame without other arguments to see the summary of today's output.\n\nlive_trace: A "daemon" thread monitors the process and writes out stracktraces of every N (float) seconds. This command line tool helps to see where the interpreter spent the most time.\n\nEvery stacktrace has several frames (call stack). In most cases you want to see "sum-last-frame" ("last" means "deepest" frames: that's where the interpreter was interrupted by the monitor thread). A simple regex tries to mark our code (vs python/django code) with <====.''' % (outfile_dir))
+class ArgumentParser(argparse.ArgumentParser):
+    def __init__(self):
+        super(ArgumentParser, self).__init__(description='''Read stacktraces log which where created by live_trace. Logs are searched in %s. By default a new file is created for every day. If unsure, use sum-last-frame without other arguments to see the summary of today's output.\n\nlive_trace: A "daemon" thread monitors the process and writes out stracktraces of every N (float) seconds. This command line tool helps to see where the interpreter spent the most time.\n\nEvery stacktrace has several frames (call stack). In most cases you want to see "sum-last-frame" ("last" means "deepest" frames: that's where the interpreter was interrupted by the monitor thread). A simple regex tries to mark our code (vs python/django code) with <====.''' % (outfile_dir))
 
-    subparsers = parser.add_subparsers(title='subcommands',
-                                       description='valid subcommands')
-    parser_analyze = subparsers.add_parser('analyze')
-    add_analyze_args(parser_analyze)
-    parser_analyze.add_argument('logfiles', help='defaults to %s' % outfile.replace('%', '%%'), default=[outfile], nargs='+')
-    parser_analyze.set_defaults(func=analyze)
 
-    parser_test = subparsers.add_parser('test')
-    parser_test.set_defaults(func=test)
+        subparsers = self.add_subparsers(title='subcommands',
+                                           description='valid subcommands')
 
-    parser_run = subparsers.add_parser('run')
-    parser_run.set_defaults(func=run)
-    parser_run.add_argument('--out-file', metavar='LOGFILE', help='defaults to %s' % outfile.replace('%', '%%'), dest='outfile', default=outfile)
-    parser_run.add_argument('--interval', metavar='FLOAT_SECS', help='Dump stracktraces every FLOAT_SECS seconds.', default=DEFAULT_INTERVAL, type=float)
-    parser_run.add_argument('command_args', nargs=argparse.PARSER)
+        # argparse does strange stuff
+        # http://stackoverflow.com/questions/8757338/sub-classing-the-argparse-argument-parser
+        subparsers._parser_class = argparse.ArgumentParser
 
-    parser_run_and_analyze = subparsers.add_parser('run-and-analyze')
-    parser_run_and_analyze.set_defaults(func=run_and_analyze)
-    parser_run_and_analyze.add_argument('--interval', metavar='FLOAT_SECS', help='Dump stracktraces every FLOAT_SECS seconds.', default=DEFAULT_INTERVAL, type=float)
-    add_analyze_args(parser_run_and_analyze)
-    parser_run_and_analyze.add_argument('command_args', nargs=argparse.PARSER)
+        parser_analyze = subparsers.add_parser('analyze')
+        add_analyze_args(parser_analyze)
+        parser_analyze.add_argument('logfiles', help='defaults to %s' % outfile.replace('%', '%%'), default=[outfile], nargs='+')
+        parser_analyze.set_defaults(func=analyze)
 
-    parser_version = subparsers.add_parser('version')
-    parser_version.set_defaults(func=version)
+        parser_test = subparsers.add_parser('test')
+        parser_test.set_defaults(func=test)
 
-    parser_sleep = subparsers.add_parser('sleep')
-    parser_sleep.set_defaults(func=sleep)
-    parser_sleep.add_argument('secs_to_sleep', type=float, default=3.0)
-    return parser
+        parser_run = subparsers.add_parser('run')
+        parser_run.set_defaults(func=run)
+        parser_run.add_argument('--out-file', metavar='LOGFILE', help='defaults to %s' % outfile.replace('%', '%%'), dest='outfile', default=outfile)
+        parser_run.add_argument('--interval', metavar='FLOAT_SECS', help='Dump stracktraces every FLOAT_SECS seconds.', default=DEFAULT_INTERVAL, type=float)
+        parser_run.add_argument('command_args', nargs=argparse.PARSER)
 
+        parser_run_and_analyze = subparsers.add_parser('run-and-analyze')
+        parser_run_and_analyze.set_defaults(func=run_and_analyze)
+        parser_run_and_analyze.add_argument('--interval', metavar='FLOAT_SECS', help='Dump stracktraces every FLOAT_SECS seconds.', default=DEFAULT_INTERVAL, type=float)
+        add_analyze_args(parser_run_and_analyze)
+        parser_run_and_analyze.add_argument('command_args', nargs=argparse.PARSER)
+
+        parser_version = subparsers.add_parser('version')
+        parser_version.set_defaults(func=version)
+
+        parser_sleep = subparsers.add_parser('sleep')
+        parser_sleep.set_defaults(func=sleep)
+        parser_sleep.add_argument('secs_to_sleep', type=float, default=3.0)
+
+    def parse_args(self, args=None):
+        return super(ArgumentParser, self).parse_args(args, namespace=self.Namespace())
+
+    Namespace=Namespace
 
 def main():
-    parser = get_argument_parser()
+    parser = ArgumentParser()
     args = parser.parse_args()
     args.func(args)
 
@@ -207,15 +222,15 @@ def start(interval=0.1, outfile_template='-'):
     interval: Monitor interpreter every N (float) seconds.
     outfile_template: output file.
     '''
-    from .tracerusingbackgroundthread import WriterToLogTemplate
-    tracer = WriterToLogTemplate(interval=interval, outfile_template=outfile_template)
+    from .writer import WriterToLogTemplate
+    tracer = TracerUsingBackgroundThread(WriterToLogTemplate(outfile_template=outfile_template), interval=interval)
     # tracer.thread.setDaemon(True) # http://bugs.python.org/issue1856
     # we use parent_thread.join(interval) now.
     # http://stackoverflow.com/questions/16731115/how-to-debug-a-python-seg-fault
     # http://stackoverflow.com/questions/18098475/detect-interpreter-shut-down-in-daemon-thread
 
-    tracerusingbackgroundthread.start()
-    return tracerusingbackgroundthread
+    tracer.start()
+    return tracer
 
 
 def stop():

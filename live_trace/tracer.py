@@ -1,18 +1,23 @@
 import datetime
+import os
 import sys
 import traceback
+from live_trace.writer import BaseWriter, WriterToLogTemplate
 
 
 class Tracer(object):
-    def __init__(self, writer_class):
-        self.writer = writer_class()
+
+    def __init__(self, writer):
+        assert isinstance(writer, BaseWriter), writer
+        self.writer = writer
+        self.init_stacktrace = ''.join(traceback.format_stack())
+        self.pid = os.getpid()
+
 
     def log_stacktraces(self):
         code = []
         now = datetime.datetime.now()
-        for thread_id, stack in sys._current_frames().items():
-            if thread_id == self.thread.ident:
-                continue  # Don't print this monitor thread
+        for thread_id, stack in self.get_current_frames():
             code.append("\n\n#START date: %s\n# ProcessId: %s\n# ThreadID: %s" % (now, self.pid, thread_id))
             for filename, lineno, name, line in traceback.extract_stack(stack):
                 code.append('File: "%s", line %d, in %s' % (filename, lineno, name))
@@ -22,3 +27,10 @@ class Tracer(object):
         if not code:
             return
         self.writer.write_traceback('\n'.join(code))
+
+    def get_current_frames(self):
+        return sys._current_frames().items()
+
+    @classmethod
+    def log_stracktraces_to_file(cls, outfile):
+        cls(WriterToLogTemplate(outfile)).log_stacktraces()
