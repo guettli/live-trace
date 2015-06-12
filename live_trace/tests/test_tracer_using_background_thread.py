@@ -45,7 +45,7 @@ class Test(unittest.TestCase):
 
         time_to_sleep = 0.01
         for i in xrange(100):
-            time.sleep(time_to_sleep)  # This line should appear
+            time.sleep(time_to_sleep) # This line should appear in log
         monitor_thread.stop()
         content = open(outfile).read()
         self.assertTrue(content)
@@ -56,13 +56,15 @@ class Test(unittest.TestCase):
 
         counter = read_logs(args)
         found = False
+        magic='time.sleep(time_to_sleep) # This line should appear in log'
         for frame, count in counter.frames.items():
-            if 'time.sleep(time_to_sleep) # This line should appear' in frame.source_code:
+            if magic in frame.source_code:
                 found = True
                 break
-        self.assertGreater(count, 60)
-        self.assertGreater(120, count)
-        self.assertIn('test_tracer_using_background_thread.py', frame.filename)
+        self.assertTrue(found, 'magic %r not found in %s' % (magic, outfile))
+        self.assertGreater(count, 60, outfile)
+        self.assertGreater(120, count, outfile)
+        self.assertIn('test_tracer_using_background_thread.py', frame.filename, (frame.filename, outfile))
 
     def test_print_logs(self):
         parser = main.get_argument_parser()
