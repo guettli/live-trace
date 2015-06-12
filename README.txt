@@ -10,7 +10,7 @@ Development
 # Installing for development
 pip install -e git+https://github.com/guettli/live-trace.git#egg=live-trace
 
-# Runnint tests
+# Running tests
 cd src/live-trace
 python setup.py test
 
