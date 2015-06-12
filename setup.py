@@ -20,7 +20,7 @@ class PyTest(setuptools.Command):
 
 setuptools.setup(
     name='live-trace',
-    version='2014.5',
+    version='2015.0',
     license="http://www.apache.org/licenses/LICENSE-2.0",
     long_description=open('README.txt').read(),
     packages=setuptools.find_packages(),
