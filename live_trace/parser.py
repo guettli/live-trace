@@ -8,7 +8,7 @@ other_code = re.compile(r'/(django|python...)/')
 class ParseError(Exception):
     pass
 
-Frame = collections.namedtuple('Frame', ('filename', 'source_code'))
+Frame = collections.namedtuple('Frame', ('filename_line_no_and_method', 'source_code'))
 
 
 def read_logs(args):
@@ -19,7 +19,7 @@ def read_logs(args):
 
 class FrameCounter(object):
     count_stacks = 0
-
+    Frame=Frame
     def __init__(self, args):
         assert isinstance(args, ArgumentParser.Namespace), args
         self.args = args
@@ -56,7 +56,7 @@ class FrameCounter(object):
                 code_line = line.rstrip()
                 if not (py_line, code_line) in cur_stack:
                     # If there is a recursion, count the line only once per stacktrace
-                    cur_stack.append(Frame(py_line, code_line))
+                    cur_stack.append(self.Frame(py_line, code_line))
                 continue
             raise ParseError('unparsed: %s' % line)
 
@@ -70,7 +70,7 @@ class FrameCounter(object):
         for i, (count, frame) in enumerate(sorted([(count, frame) for (frame, count) in self.frames.items()], reverse=True)):
             if i > self.args.most_common:
                 break
-            filename = frame.filename
+            filename = frame.filename_line_no_and_method
             if not other_code.search(filename):
                 filename = '%s      %s' % (filename, self.our_code_marker)
             yield '% 5d %.2f%% %s\n    %s' % (count, count * 100.0 / self.count_stacks, filename, frame.source_code)

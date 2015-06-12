@@ -1,3 +1,4 @@
+import os
 import tempfile
 import unittest
 from live_trace.main import ArgumentParser
@@ -12,6 +13,7 @@ class Test(unittest.TestCase):
         args.logfiles.append(outfile)
         frame_counter = FrameCounter(args)
         frame_counter.read_logs()
-        self.assertEqual(1, len(frame_counter.frames))
+        test_manual_files=[os.path.basename(frame.filename_line_no_and_method.split(' ', 2)[1]) for frame in frame_counter.frames if 'test_manual_writing' in frame.filename_line_no_and_method]
+        self.assertEqual(['test_manual_writing.py",'], test_manual_files)
         content=open(outfile).read()
         self.assertNotIn('live_trace/tracer.py', content)
