@@ -60,7 +60,7 @@ class Test(unittest.TestCase):
         self.assertTrue(found, 'magic %r not found in %s' % (magic, outfile))
         self.assertGreater(count, 60, outfile)
         self.assertGreater(120, count, outfile)
-        self.assertIn('test_tracer_using_background_thread.py', frame.filename, (frame.filename, outfile))
+        self.assertIn('test_tracer_using_background_thread.py', frame.filename_line_no_and_method, (frame.filename_line_no_and_method, outfile))
 
     def test_print_logs(self):
         parser = main.ArgumentParser()
@@ -71,10 +71,10 @@ class Test(unittest.TestCase):
         counter.count_stacks = 94
 
         counter.frames = {
-            Frame(filename='File: "/usr/lib64/python2.7/threading.py", line 243, in wait',
+            Frame(filename_line_no_and_method='File: "/usr/lib64/python2.7/threading.py", line 243, in wait',
                   source_code='  waiter.acquire()'): 1,
             Frame(
-                filename='File: "/home/foog/src/live-trace/live_trace/tests/test_tracer_using_background_thread.py", line 38, in test_read_logs',
+                filename_line_no_and_method='File: "/home/foog/src/live-trace/live_trace/tests/test_tracer_using_background_thread.py", line 38, in test_read_logs',
                 source_code='  time.sleep(time_to_sleep) # This line should appear'): 92}
 
         lines = list(counter.print_counts_to_lines())
