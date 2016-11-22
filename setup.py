@@ -1,4 +1,5 @@
 import setuptools
+import subprocess
 
 
 class PyTest(setuptools.Command):
@@ -11,7 +12,6 @@ class PyTest(setuptools.Command):
         pass
 
     def run(self):
-        import subprocess
         import sys
 
         errno = subprocess.call([sys.executable, 'runtests.py'])
