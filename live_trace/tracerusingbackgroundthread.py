@@ -3,13 +3,14 @@ import atexit
 import threading
 from .tracer import Tracer
 
-# http://stackoverflow.com/questions/13193278/understand-python-threading-bug
-threading._DummyThread._Thread__stop = lambda x: True
 
 import logging
 
 logger = logging.getLogger(__name__)
 del (logging)
+
+# http://stackoverflow.com/questions/13193278/understand-python-threading-bug
+threading._DummyThread._Thread__stop = lambda x: True
 
 is_running = threading.Semaphore()
 is_running_tracer = []
