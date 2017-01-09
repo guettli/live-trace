@@ -53,7 +53,7 @@ class Test(unittest.TestCase):
 
         counter = read_logs(args)
         found = False
-        magic = 'time.sleep(time_to_sleep) # This line should appear in log'
+        magic = 'time.sleep(time_to_sleep)  # This line should appear in log'
         for frame, count in counter.frames.items():
             if magic in frame.source_code:
                 found = True
