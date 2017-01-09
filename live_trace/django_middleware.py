@@ -2,6 +2,19 @@
 from __future__ import absolute_import, division, unicode_literals, print_function
 
 from django.conf import settings
+from live_trace.tracerusingbackgroundthread import TracerAlreadyRunning
+from live_trace import main
+
+'''
+# settings.py
+
+# add the LiveTraceMiddleware to you MIDDLEWARE_CLASSES:
+MIDDLEWARE_CLASSES=[
+    'live_trace.django_middleware.LiveTraceMiddleware',
+    ...,
+ ])
+
+'''
 
 DEFAULT_LIVE_TRACE_INTERVAL = 0.3
 
@@ -12,9 +25,8 @@ class LiveTraceMiddleware:
         seconds = getattr(settings, 'LIVE_TRACE_INTERVAL', DEFAULT_LIVE_TRACE_INTERVAL)
         if not seconds:
             return
-        import live_trace
         try:
-            live_trace.start(seconds, live_trace.outfile)
-        except live_trace.tracer.TracerAlreadyRunning:
+            main.start(seconds, main.outfile)
+        except TracerAlreadyRunning:
             # During tests the middleware gets loaded several times.
             return

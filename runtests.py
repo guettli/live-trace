@@ -5,7 +5,6 @@
 # even be worried that we're up to something nefarious (good for you for being
 # paranoid!). This is a base64 encoding of a zip file, this zip file contains
 # a fully functional basic pytest script.
-#
 # Pytest is a thing that tests packages, pytest itself is a package that some-
 # one might want to install, especially if they're looking to run tests inside
 # some package they want to install. Pytest has a lot of code to collect and
@@ -14,7 +13,6 @@
 # of pytest inside this blob. We do this  because it let's you as a maintainer
 # or application developer who wants people who don't deal with python much to
 # easily run tests without installing the complete pytest package.
-#
 # If you're wondering how this is created: you can create it yourself if you
 # have a complete pytest installation by using this command on the command-
 # line: ``py.test --genscript=runtests.py``.

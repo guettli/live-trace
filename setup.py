@@ -1,4 +1,5 @@
 import setuptools
+import subprocess
 
 
 class PyTest(setuptools.Command):
@@ -11,7 +12,6 @@ class PyTest(setuptools.Command):
         pass
 
     def run(self):
-        import subprocess
         import sys
 
         errno = subprocess.call([sys.executable, 'runtests.py'])
@@ -20,7 +20,7 @@ class PyTest(setuptools.Command):
 
 setuptools.setup(
     name='live-trace',
-    version='2015.2',
+    version='2015.4',
     license="http://www.apache.org/licenses/LICENSE-2.0",
     long_description=open('README.rst').read(),
     packages=setuptools.find_packages(),

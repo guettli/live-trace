@@ -106,14 +106,13 @@ DEFAULT_INTERVAL = 0.1
 
 class Namespace(argparse.Namespace):
     logfiles = []
-    sum_all_frames = False
 
 
 class ArgumentParser(argparse.ArgumentParser):
     def __init__(self):
         super(ArgumentParser, self).__init__(
             description='''Read stacktraces log which where created by live_trace. Logs are searched in %s. By default a new file is created for every day. If unsure, use sum-last-frame without other arguments to see the summary of today's output.\n\nlive_trace: A "daemon" thread monitors the process and writes out stracktraces of every N (float) seconds. This command line tool helps to see where the interpreter spent the most time.\n\nEvery stacktrace has several frames (call stack). In most cases you want to see "sum-last-frame" ("last" means "deepest" frames: that's where the interpreter was interrupted by the monitor thread). A simple regex tries to mark our code (vs python/django code) with <====.''' % (
-            outfile_dir))
+                outfile_dir))
 
         subparsers = self.add_subparsers(title='subcommands',
                                          description='valid subcommands')
