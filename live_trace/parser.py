@@ -67,7 +67,7 @@ class FrameCounter(object):
 
     def print_counts(self):
         for line in self.print_counts_to_lines():
-            print line
+            print(line)
 
     our_code_marker = '<===='
 

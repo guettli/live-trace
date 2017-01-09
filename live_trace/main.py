@@ -88,7 +88,7 @@ def run_and_analyze(args):
 
 def version(args):
     import pkg_resources
-    print pkg_resources.get_distribution('live-trace').version
+    print(pkg_resources.get_distribution('live-trace').version)
 
 
 def sleep(args):
