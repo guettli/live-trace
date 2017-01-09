@@ -33,3 +33,19 @@ Usage run, analyze later::
     Now you can analyze the collected stacktraces:
 
     you@unix> live-trace analyze tmp/live_trace/2017-01-09-11-23-40.log
+
+Django Middleware
+=================
+
+The django middleware is optional. The tool live-trace is a general python tool..
+
+You can start the watching thread your django middleware like this::
+
+    MIDDLEWARE_CLASSES=[
+        ...
+        'live_trace.django_middleware.LiveTraceMiddleware',
+    ]
+
+Optional update the `settings.py`::
+
+    live_trace_interval=0.3 # ever 0.3 second

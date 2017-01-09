@@ -39,16 +39,6 @@ optional arguments:
 
 ---------------------------------
 
-You can start the watching thread your django middleware like this:
-
-MIDDLEWARE_CLASSES=[
-    ...
-    'live_trace.django_middleware.LiveTraceMiddleware',
-]
-
-# settings.py
-live_trace_interval=0.3 # ever 0.3 second
-
 You can get a simple report of the log file of stacktraces like below. The lines
 which are not from django are marked with "<====". That's most likely your code
 and this could be a bottle neck.
