@@ -59,7 +59,6 @@ Since Python and Django code is already optimized, your code gets highlighted wi
 
 That's most likely your code and this could be a bottle neck::
 
-    python ..../live_trace.py read
      1971 File: "/home/foo_bar_p/django/core/handlers/wsgi.py", line 272, in __call__
         response = self.get_response(request)
      1812 File: "/home/foo_bar_p/django/core/handlers/base.py", line 111, in get_response
