@@ -37,33 +37,6 @@ optional arguments:
   -h, --help            show this help message and exit
   --most-common N       Display the N most common lines in the stacktraces
 
----------------------------------
-
-You can get a simple report of the log file of stacktraces like below. The lines
-which are not from django are marked with "<====". That's most likely your code
-and this could be a bottle neck.
-
-python ..../live_trace.py read
- 1971 File: "/home/foo_bar_p/django/core/handlers/wsgi.py", line 272, in __call__
-    response = self.get_response(request)
- 1812 File: "/home/foo_bar_p/django/core/handlers/base.py", line 111, in get_response
-    response = callback(request, *callback_args, **callback_kwargs)
- 1725 File: "/home/foo_bar_p/django/db/backends/postgresql_psycopg2/base.py", line 44, in execute
-    return self.cursor.execute(query, args)
- 1724 File: "/home/foo_bar_p/django/db/models/sql/compiler.py", line 735, in execute_sql
-    cursor.execute(sql, params)
- 1007 File: "/home/foo_bar_p/django/db/models/sql/compiler.py", line 680, in results_iter
-    for rows in self.execute_sql(MULTI):
-  796 File: "/home/foo_bar_p/django/db/models/query.py", line 273, in iterator
-    for row in compiler.results_iter():
-  763 File: "/home/foo_bar_p/foo/utils/ticketutils.py", line 135, in __init__    <====
-    filter=type_filter(root_node=self.root_node)
-  684 File: "/home/foo_bar_p/django/db/models/query.py", line 334, in count
-    return self.query.get_count(using=self.db)
-  679 File: "/home/foo_bar_p/django/db/models/sql/query.py", line 367, in get_aggregation
-    result = query.get_compiler(using).execute_sql(SINGLE)
-  677 File: "/home/foo_bar_p/django/db/models/sql/query.py", line 401, in get_count
-    number = obj.get_aggregation(using=using)[None]
 
 
 '''
