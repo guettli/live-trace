@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Initial Code from djangotools/utils/debug_live.py
+from __future__ import absolute_import, division, unicode_literals, print_function
 
 import argparse
 import logging
