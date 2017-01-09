@@ -37,7 +37,7 @@ Usage run, analyze later::
 Django Middleware
 =================
 
-The django middleware is optional. The tool live-trace is a general python tool..
+The django middleware is optional. The tool live-trace is a general python tool.
 
 You can start the watching thread your django middleware like this::
 
@@ -46,6 +46,6 @@ You can start the watching thread your django middleware like this::
         'live_trace.django_middleware.LiveTraceMiddleware',
     ]
 
-Optional update the `settings.py`::
+Optional, update the `settings.py`::
 
-    live_trace_interval=0.3 # ever 0.3 second
+    live_trace_interval=0.1 # Default is every 0.3 second. Set to None to disable live-tracing.
