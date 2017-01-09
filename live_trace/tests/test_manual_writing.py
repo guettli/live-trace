@@ -1,10 +1,9 @@
 import tempfile
 import unittest
+
 from live_trace.main import ArgumentParser
 from live_trace.parser import FrameCounter
 from live_trace.tracer import Tracer
-
-from live_trace.writer import WriterToLogTemplate
 
 
 class Test(unittest.TestCase):

@@ -1,5 +1,6 @@
-import re
 import collections
+import re
+
 from live_trace.main import ArgumentParser
 
 other_code = re.compile(r'/(django|python...)/')
@@ -7,6 +8,7 @@ other_code = re.compile(r'/(django|python...)/')
 
 class ParseError(Exception):
     pass
+
 
 Frame = collections.namedtuple('Frame', ('filename', 'source_code'))
 
@@ -67,7 +69,8 @@ class FrameCounter(object):
     our_code_marker = '<===='
 
     def print_counts_to_lines(self):
-        for i, (count, frame) in enumerate(sorted([(count, frame) for (frame, count) in self.frames.items()], reverse=True)):
+        for i, (count, frame) in enumerate(
+                sorted([(count, frame) for (frame, count) in self.frames.items()], reverse=True)):
             if i > self.args.most_common:
                 break
             filename = frame.filename

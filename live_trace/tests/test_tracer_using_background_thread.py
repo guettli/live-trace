@@ -1,17 +1,18 @@
-import os
-import time
 import datetime
+import logging
+import os
 import tempfile
+import time
 import unittest
 
 from live_trace.writer import WriterToLogTemplate
 
-import logging
 logger = logging.getLogger(__name__)
 del (logging)
 
 from live_trace.tracerusingbackgroundthread import TracerUsingBackgroundThread, TracerAlreadyRunning
 from live_trace import main
+
 
 class Test(unittest.TestCase):
     interval = 0.01
@@ -41,7 +42,7 @@ class Test(unittest.TestCase):
 
         time_to_sleep = 0.01
         for i in xrange(100):
-            time.sleep(time_to_sleep) # This line should appear in log
+            time.sleep(time_to_sleep)  # This line should appear in log
         monitor_thread.stop()
         content = open(outfile).read()
         self.assertTrue(content)
@@ -52,7 +53,7 @@ class Test(unittest.TestCase):
 
         counter = read_logs(args)
         found = False
-        magic='time.sleep(time_to_sleep) # This line should appear in log'
+        magic = 'time.sleep(time_to_sleep) # This line should appear in log'
         for frame, count in counter.frames.items():
             if magic in frame.source_code:
                 found = True

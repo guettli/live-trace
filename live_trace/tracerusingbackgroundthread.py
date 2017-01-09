@@ -1,6 +1,6 @@
-import os
 import atexit
 import threading
+
 from .tracer import Tracer
 
 # http://stackoverflow.com/questions/13193278/understand-python-threading-bug
