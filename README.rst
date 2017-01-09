@@ -21,6 +21,7 @@ Usage
 =====
 
 Usage run-and-analyze::
+
     you@unix> live-trace run-and-analyze your-python-script.py
 
 Usage run, analyze later::
