@@ -20,27 +20,6 @@ else:
     logger = logging.getLogger(__name__)
 del(logging)
 
-u'''
-
-live_trace.start(seconds_float) starts a monitor thread which print the stacktrace of all threads into
-a logfile. You can report which lines are executed the most with this script:
-
-app_foo_d@server:~$ live-trace -h
-usage: live-trace [-h] [--most-common N] {sum-all-frames,sum-last-frame}
-
-Read stacktrace log
-
-positional arguments:
-  {sum-all-frames,sum-last-frame}
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --most-common N       Display the N most common lines in the stacktraces
-
-
-
-'''
-
 
 outfile_dir = os.path.expanduser('~/tmp/live_trace')
 outfile = os.path.join(outfile_dir, '{:%Y-%m-%d-%H-%M-%S}.log')
