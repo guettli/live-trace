@@ -2,12 +2,10 @@
 from __future__ import absolute_import, division, unicode_literals, print_function
 
 import atexit
+import logging
 import threading
 
 from .tracer import Tracer
-
-
-import logging
 
 logger = logging.getLogger(__name__)
 del (logging)

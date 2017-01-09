@@ -106,7 +106,7 @@ DEFAULT_INTERVAL = 0.1
 
 class Namespace(argparse.Namespace):
     logfiles = []
-
+    sum_all_frames = True
 
 class ArgumentParser(argparse.ArgumentParser):
     def __init__(self):

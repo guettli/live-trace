@@ -64,7 +64,8 @@ class Test(unittest.TestCase):
         self.assertTrue(found, 'magic %r not found in %s' % (magic, outfile))
         self.assertGreater(count, 60, outfile)
         self.assertGreater(120, count, outfile)
-        self.assertIn('test_tracer_using_background_thread.py', frame.filename_line_no_and_method, (frame.filename_line_no_and_method, outfile))
+        self.assertIn('test_tracer_using_background_thread.py', frame.filename_line_no_and_method,
+                      (frame.filename_line_no_and_method, outfile))
 
     def test_print_logs(self):
         parser = main.ArgumentParser()

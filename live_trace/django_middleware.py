@@ -2,8 +2,8 @@
 from __future__ import absolute_import, division, unicode_literals, print_function
 
 from django.conf import settings
-from live_trace.tracerusingbackgroundthread import TracerAlreadyRunning
 from live_trace import main
+from live_trace.tracerusingbackgroundthread import TracerAlreadyRunning
 
 '''
 # settings.py

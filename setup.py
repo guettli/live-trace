@@ -1,5 +1,6 @@
-import setuptools
 import subprocess
+
+import setuptools
 
 
 class PyTest(setuptools.Command):
