@@ -1,3 +1,7 @@
+.. image:: https://travis-ci.org/guettli/live-trace.svg?branch=master
+    :target: https://travis-ci.org/guettli/live-trace
+    
+    
 live-trace
 ==========
 
