@@ -52,21 +52,15 @@ def pre_execfile(command_args):
     return cmd_from_path
 
 
-def run(args, on_exit_callback=None):
+def run(args):
     cmd_from_path = pre_execfile(args.command_args)
     tracer = start(interval=args.interval, outfile_template=args.outfile)
-    run_post_trace_start(args, tracer, cmd_from_path, on_exit_callback)
+    run_post_trace_start(args, tracer, cmd_from_path)
 
 
-def run_post_trace_start(args, tracer, cmd_from_path, on_exit_callback=None):
-    __name__ = '__main__'
-    try:
-        execfile(cmd_from_path)
-    except SystemExit as exc:
-        if not on_exit_callback:
-            raise
+def run_post_trace_start(args, tracer, cmd_from_path):
+    execfile(cmd_from_path, {'__name__': '__main__'})
     tracer.stop()
-    on_exit_callback(args, exc.code)
 
 
 def run_and_analyze(args):
@@ -74,16 +68,18 @@ def run_and_analyze(args):
     cmd_from_path = pre_execfile(args.command_args)
 
     with tempfile.TemporaryFile() as fd:
-        def run_and_analyze_on_exit(args, code):
-            from . import parser
-            counter = parser.FrameCounter(args)
-            fd.seek(0)
-            counter.read_logs_of_fd(fd)
-            counter.print_counts()
 
         tracer = TracerUsingBackgroundThread(WriterToStream(fd), args.interval)
         tracer.start()
-        run_post_trace_start(args, tracer, cmd_from_path, run_and_analyze_on_exit)
+        run_post_trace_start(args, tracer, cmd_from_path)
+        analyze_from_fd(fd, args)
+
+def analyze_from_fd(fd, args):
+    from . import parser
+    counter = parser.FrameCounter(args)
+    fd.seek(0)
+    counter.read_logs_of_fd(fd)
+    counter.print_counts()
 
 
 def version(args):
