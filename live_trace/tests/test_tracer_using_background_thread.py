@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, unicode_literals, print_function
 
 import datetime
+import io
 import logging
 import os
 import tempfile
@@ -13,15 +14,28 @@ from live_trace.writer import WriterToLogTemplate
 logger = logging.getLogger(__name__)
 del (logging)
 
-from live_trace.tracerusingbackgroundthread import TracerUsingBackgroundThread, TracerAlreadyRunning
+from live_trace.tracerusingbackgroundthread import TracerUsingBackgroundThread, TracerAlreadyRunning, is_running_tracer
 from live_trace import main
 
 
 class Test(unittest.TestCase):
     interval = 0.01
 
+    def sleep_script(self):
+        temp = tempfile.mktemp(prefix='live_trace_sleep_', suffix='.py')
+        with io.open(temp, 'wb') as fd:
+            fd.write(b'''# -*- coding: utf-8 -*-
+from __future__ import absolute_import, division, unicode_literals, print_function
+import sys, time
+time.sleep(float(sys.argv[1]))
+''')
+        return temp
+
+
+
     def tearDown(self):
-        self.assertTrue(TracerUsingBackgroundThread.could_start())  # please stop tracer in tests.
+        self.assertTrue(TracerUsingBackgroundThread.could_start(), 'Tracer was not stopped in test. Please do this. Here is the traceback where the tracer was started: %s' %
+                        '\n'.join([tracer.init_stacktrace for tracer in is_running_tracer]))
 
     def test_get_outfile(self):
         tracer = TracerUsingBackgroundThread(WriterToLogTemplate(outfile_template='abc'), self.interval)
@@ -99,20 +113,12 @@ class Test(unittest.TestCase):
 
     def test_run_command(self):
         parser = main.ArgumentParser()
-        args = parser.parse_args(['run', '--interval', '10', 'live-trace', 'sleep', '0.1'])
-
-        def on_exit(args, code):
-            self.assertIn(code, [0, None])
-
-        args.func(args, on_exit_callback=on_exit)
+        args = parser.parse_args(['run', '--interval', '10',  self.sleep_script(), '0.1'])
+        args.func(args)
 
     def test_run_and_analyze_command(self):
         parser = main.ArgumentParser()
-        args = parser.parse_args(['run-and-analyze', '--interval', '0.1', 'live-trace', 'sleep', '0.1'])
-
-        def on_exit(code):
-            self.assertIn(code, [0, None])
-
+        args = parser.parse_args(['run-and-analyze', '--interval', '0.1', self.sleep_script(), '0.1'])
         args.func(args)
 
     def test_stop_is_fast(self):

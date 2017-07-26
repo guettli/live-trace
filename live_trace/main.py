@@ -55,10 +55,10 @@ def pre_execfile(command_args):
 def run(args):
     cmd_from_path = pre_execfile(args.command_args)
     tracer = start(interval=args.interval, outfile_template=args.outfile)
-    run_post_trace_start(args, tracer, cmd_from_path)
+    live_trace_is_running__now_run_code_which_should_get_traced(args, tracer, cmd_from_path)
 
 
-def run_post_trace_start(args, tracer, cmd_from_path):
+def live_trace_is_running__now_run_code_which_should_get_traced(args, tracer, cmd_from_path):
     execfile(cmd_from_path, {'__name__': '__main__'})
     tracer.stop()
 
@@ -71,7 +71,7 @@ def run_and_analyze(args):
 
         tracer = TracerUsingBackgroundThread(WriterToStream(fd), args.interval)
         tracer.start()
-        run_post_trace_start(args, tracer, cmd_from_path)
+        live_trace_is_running__now_run_code_which_should_get_traced(args, tracer, cmd_from_path)
         analyze_from_fd(fd, args)
 
 def analyze_from_fd(fd, args):
