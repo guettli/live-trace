@@ -2,7 +2,6 @@ import subprocess
 
 import setuptools
 
-
 class PyTest(setuptools.Command):
     user_options = []
 
