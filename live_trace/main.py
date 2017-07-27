@@ -17,7 +17,7 @@ else:
 del (logging)
 
 outfile_dir = os.path.expanduser('~/tmp/live_trace')
-outfile = os.path.join(outfile_dir, '{:%Y-%m-%d-%H-%M-%S}.log')
+outfile = os.path.join(outfile_dir, '{:%Y-%m-%d-%H-%M-%S}--pid%s.log' % os.getpid())
 
 monitor_thread = None
 
