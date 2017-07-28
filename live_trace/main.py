@@ -87,10 +87,6 @@ def version(args):
     print(pkg_resources.get_distribution('live-trace').version)
 
 
-def sleep(args):
-    time.sleep(args.secs_to_sleep)
-
-
 def add_analyze_args(parser):
     parser.add_argument('--sum-all-frames', action='store_true')
     parser.add_argument('--most-common', '-m', metavar='N', default=30, type=int,
@@ -144,10 +140,6 @@ class ArgumentParser(argparse.ArgumentParser):
 
         parser_version = subparsers.add_parser('version')
         parser_version.set_defaults(func=version)
-
-        parser_sleep = subparsers.add_parser('sleep')
-        parser_sleep.set_defaults(func=sleep)
-        parser_sleep.add_argument('secs_to_sleep', type=float, default=3.0)
 
     def parse_args(self, args=None):
         return super(ArgumentParser, self).parse_args(args, namespace=self.Namespace())
