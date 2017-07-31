@@ -128,3 +128,8 @@ time.sleep(float(sys.argv[1]))
         duration = time.time() - start_time
         self.assertTrue(TracerUsingBackgroundThread.could_start())
         self.assertLessEqual(duration, 0.04)
+
+    def test_start_twice(self):
+        main.start_idempotent(0.01)
+        main.start_idempotent(0.01)
+        main.stop()

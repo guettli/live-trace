@@ -8,7 +8,7 @@ import sys
 import tempfile
 import time
 
-from live_trace.tracerusingbackgroundthread import TracerUsingBackgroundThread
+from live_trace.tracerusingbackgroundthread import TracerUsingBackgroundThread, TracerAlreadyRunning
 
 if __name__ == '__main__':
     logger = logging.getLogger(os.path.basename(sys.argv[0]))
@@ -152,6 +152,12 @@ def main():
     args = parser.parse_args()
     args.func(args)
 
+
+def start_idempotent(interval=0.1, outfile_template='-'):
+    try:
+        start(interval, outfile_template)
+    except TracerAlreadyRunning as exc:
+        pass
 
 def start(interval=0.1, outfile_template='-'):
     '''
