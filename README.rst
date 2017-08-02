@@ -11,15 +11,20 @@ where the interpreter spends most of the time.  It is called
 "live-trace" since it can be used on production systems without
 noticeable performance impact.
 
-Development
-===========
+Why?
+====
 
-# Installing for development
-pip install -e git+https://github.com/guettli/live-trace.git#egg=live-trace
+If you want to see why a particular request is slow, then use a profiler, not live-trace.
 
-# Running tests
-cd src/live-trace
-python setup.py test
+Use live-trace if you want to see the bird's-eye view. If you ask yourself the question:
+
+  What is the interpreter doing all day long?
+
+Then use live-trace in your production environment. Let it collect a lot of snaphosts of the interpreter state.
+The current implementation uses stacktraces for freezing the state of the interpreter. 
+After running for some hours you can aggregate the collected stacktraces
+and identify hot spots.
+
 
 Usage
 =====
@@ -38,10 +43,21 @@ Usage run, analyze later::
 
     you@unix> live-trace analyze tmp/live_trace/2017-01-09-11-23-40.log
 
+Development
+===========
+
+# Installing for development
+pip install -e git+https://github.com/guettli/live-trace.git#egg=live-trace
+
+# Running tests
+cd src/live-trace
+python setup.py test
+
 Django Middleware
 =================
 
 The django middleware is optional. The tool live-trace is a general python tool.
+If you want to use live-trace in other web frameworks, take this as template.
 
 You can start the watching thread your django middleware like this::
 
