@@ -11,6 +11,12 @@ where the interpreter spends most of the time.  It is called
 "live-trace" since it can be used on production systems without
 noticeable performance impact.
 
+Alternatives
+============
+
+live-trace is a very simple script. I guess (never used it), this is a far better solution: https://github.com/uber/pyflame
+
+
 Why?
 ====
 
