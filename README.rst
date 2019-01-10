@@ -16,6 +16,8 @@ Alternatives
 
 live-trace is a very simple script. I guess (never used it), this is a far better solution: https://github.com/uber/pyflame
 
+Or this one: https://github.com/benfred/py-spy
+
 
 Why?
 ====
