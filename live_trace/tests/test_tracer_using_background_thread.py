@@ -58,7 +58,7 @@ time.sleep(float(sys.argv[1]))
         self.assertRaises(TracerAlreadyRunning, main.start, (self.interval,), **dict(outfile_template=outfile))
 
         time_to_sleep = 0.01
-        for i in xrange(100):
+        for i in range(100):
             time.sleep(time_to_sleep)  # This line should appear in log
         monitor_thread.stop()
         content = open(outfile).read()
