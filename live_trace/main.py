@@ -59,7 +59,7 @@ def run(args):
 
 
 def live_trace_is_running__now_run_code_which_should_get_traced(args, tracer, cmd_from_path):
-    execfile(cmd_from_path, {'__name__': '__main__'})
+    exec(compile(open(cmd_from_path).read()), {'__name__': '__main__'})
     tracer.stop()
 
 
