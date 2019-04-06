@@ -1,20 +1,19 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, unicode_literals, print_function
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import argparse
 import logging
 import os
 import sys
 import tempfile
-import time
 
-from live_trace.tracerusingbackgroundthread import TracerUsingBackgroundThread, TracerAlreadyRunning
+from live_trace.tracerusingbackgroundthread import TracerAlreadyRunning, TracerUsingBackgroundThread
 
 if __name__ == '__main__':
     logger = logging.getLogger(os.path.basename(sys.argv[0]))
 else:
     logger = logging.getLogger(__name__)
-del (logging)
+del logging
 
 outfile_dir = os.path.expanduser('~/tmp/live_trace')
 outfile = os.path.join(outfile_dir, '{:%%Y-%%m-%%d-%%H-%%M-%%S}--pid%s.log' % os.getpid())
@@ -69,11 +68,11 @@ def run_and_analyze(args):
     cmd_from_path = pre_execfile(args.command_args)
 
     with tempfile.TemporaryFile() as fd:
-
         tracer = TracerUsingBackgroundThread(WriterToStream(fd), args.interval)
         tracer.start()
         live_trace_is_running__now_run_code_which_should_get_traced(args, tracer, cmd_from_path)
         analyze_from_fd(fd, args)
+
 
 def analyze_from_fd(fd, args):
     from . import parser
@@ -100,6 +99,7 @@ DEFAULT_INTERVAL = 0.1
 class Namespace(argparse.Namespace):
     logfiles = []
     sum_all_frames = True
+
 
 class ArgumentParser(argparse.ArgumentParser):
     def __init__(self):
@@ -160,11 +160,12 @@ def start_idempotent(interval=0.1, outfile_template='-'):
     except TracerAlreadyRunning as exc:
         pass
 
+
 def start(interval=0.1, outfile_template='-'):
-    '''
+    """
     interval: Monitor interpreter every N (float) seconds.
     outfile_template: output file.
-    '''
+    """
     from .writer import WriterToLogTemplate
     tracer = TracerUsingBackgroundThread(WriterToLogTemplate(outfile_template=outfile_template), interval=interval)
     # tracer.thread.setDaemon(True) # http://bugs.python.org/issue1856
