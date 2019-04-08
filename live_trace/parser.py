@@ -41,7 +41,6 @@ class FrameCounter(object):
         # The outfile can be huge, don't read the whole file into memory.
         cur_stack = []
         py_line = ''
-        code_line = ''
         for line in fd:
             if line.startswith('#END'):
                 self.count_stacks += 1
