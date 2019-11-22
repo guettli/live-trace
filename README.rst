@@ -14,9 +14,9 @@ noticeable performance impact.
 Alternatives
 ============
 
-live-trace is a very simple script. I guess (never used it), this is a far better solution: https://github.com/uber/pyflame (looks unmaintained).
+Please, do not use live-trace any more. I recommend this:
 
-Or this one: https://github.com/benfred/py-spy
+[py-spy](https://github.com/benfred/py-spy) and [speedscope](https://github.com/jlfwong/speedscope) for analyzing the profile graph.
 
 
 Why live trace?
