@@ -19,8 +19,8 @@ live-trace is a very simple script. I guess (never used it), this is a far bette
 Or this one: https://github.com/benfred/py-spy
 
 
-Why?
-====
+Why live trace?
+===============
 
 If you want to see why a particular request is slow, then use a profiler, not live-trace.
 
