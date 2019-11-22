@@ -14,7 +14,7 @@ setup(
 
     # Updated via travisd: https://travis-ci.org/guettli/live-trace
     # See .travis.yml
-    version='2017.24.0',
+    version='2017.25.0',
 
     description='Trace a Python application using a deamon thread.',
     long_description=long_description,
