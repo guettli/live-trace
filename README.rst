@@ -14,7 +14,7 @@ noticeable performance impact.
 Alternatives
 ============
 
-live-trace is a very simple script. I guess (never used it), this is a far better solution: https://github.com/uber/pyflame
+live-trace is a very simple script. I guess (never used it), this is a far better solution: https://github.com/uber/pyflame (looks unmaintained).
 
 Or this one: https://github.com/benfred/py-spy
 
