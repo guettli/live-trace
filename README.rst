@@ -18,7 +18,7 @@ Please, do not use live-trace any more. I recommend this:
 
 For Python: `py-spy <https://github.com/benfred/py-spy>`_ and `speedscope <https://github.com/jlfwong/speedscope>`_ for analyzing the profile graph.
 
-For Kubernetes: [Parca](//parca.dev)
+For Kubernetes: `Parca <//parca.dev>`_
 
 Why live trace?
 ===============
