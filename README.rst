@@ -11,6 +11,8 @@ where the interpreter spends most of the time.  It is called
 "live-trace" since it can be used on production systems without
 noticeable performance impact.
 
+This is called "sampling profile" or "statistical profiler"
+
 Alternatives
 ============
 
@@ -18,7 +20,7 @@ Please, do not use live-trace any more. I recommend this:
 
 For Python: `py-spy <https://github.com/benfred/py-spy>`_ and `speedscope <https://github.com/jlfwong/speedscope>`_ for analyzing the profile graph.
 
-For Kubernetes: `Parca <//parca.dev>`_
+For go/c/c++ on Kubernetes or Systemd: `Parca <//parca.dev>`_
 
 Why live trace?
 ===============
