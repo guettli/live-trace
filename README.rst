@@ -11,7 +11,7 @@ where the interpreter spends most of the time.  It is called
 "live-trace" since it can be used on production systems without
 noticeable performance impact.
 
-This is called "sampling profile" or "statistical profiler"
+This is called "sampling profile", "statistical profiler" or "continuous profiler"
 
 Alternatives
 ============
